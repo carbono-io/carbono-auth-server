@@ -7,7 +7,8 @@
 var express = require('express'),
     bodyParser = require('body-parser'),
     oauthserver = require('oauth2-server'),
-    memorystore = require('model.js');
+    carbonoModel = require('./model.js'),
+    should = require('should');
  
 var app = express();
  
@@ -16,9 +17,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
  
 app.oauth = oauthserver({
-  model: memorystore,
-  grants: ['password','refresh_token'],
-  debug: true
+    model: carbonoModel,
+    grants: ['password'],
+    debug: true
 });
  
 app.all('/oauth/token', app.oauth.grant());

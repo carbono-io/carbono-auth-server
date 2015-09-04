@@ -13,6 +13,14 @@ How to use
 
 ```node .```
 
+```
+curl --data "grant_type=password&client_id=moura&client_secret=carbono123&username=danielmoura&password=carbono123" --header "Content-Type: application/x-www-form-urlencoded" http://localhost:3000/oauth/token
+```
+
+```
+curl http://localhost:3000/?access_token=abcd1234
+```
+
 More information
 ================
 https://www.npmjs.com/package/oauth2-server
