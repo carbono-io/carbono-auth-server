@@ -1,0 +1,25 @@
+{
+  "name": "carbono-auth-server",
+  "version": "1.0.0",
+  "description": "carbono.io authentication server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@bitbucket.org/carbonoio/carbono-auth-server.git"
+  },
+  "keywords": [
+    "auth",
+    "auth2"
+  ],
+  "author": "Daniel Moura",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/carbonoio/carbono-auth-server#readme",
+  "dependencies": {
+    "body-parser": "^1.13.3",
+    "express": "^4.13.3",
+    "oauth2-server": "^2.4.1"
+  }
+}
