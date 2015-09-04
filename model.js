@@ -1,5 +1,5 @@
 /**
- * Stub model for Cabono Authentication Server
+ * Stub model for Carbono Authentication Server
  * 
  * @author Daniel Moura
  */

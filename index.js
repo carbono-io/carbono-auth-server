@@ -1,5 +1,5 @@
 /**
- * Cabono Authentication Server (based on oauth2-server npm page)
+ * Carbono Authentication Server (based on oauth2-server npm page)
  * 
  * @author Daniel Moura
  */
