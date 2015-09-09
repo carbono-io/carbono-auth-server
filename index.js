@@ -24,9 +24,9 @@ app.oauth = oauthserver({
  
 app.all('/oauth/token', app.oauth.grant());
  
-app.get('/', app.oauth.authorise(), function (req, res) {
-  res.send('Secret area');
-});
+// app.get('/', app.oauth.authorise(), function (req, res) {
+//   res.send('Secret area');
+// });
  
 app.use(app.oauth.errorHandler());
  
