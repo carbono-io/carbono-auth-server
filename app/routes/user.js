@@ -2,9 +2,10 @@
 module.exports = function (app) {
 
     var user = app.controllers.user;
+	var auth = app.controllers.auth;
 	
-	app.get('/api/userinfo', user.info);
-	app.get('/api/clientinfo', user.clientInfo);
-
+	app.post('/users', user.postUsers);
+	app.get('/users', auth.isAuthenticated, user.getUsers);
+	
     return this;
 };

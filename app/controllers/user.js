@@ -1,11 +1,30 @@
 'use strict';
-var user = require('../lib/user');
-var client = require('../lib/client');
+var User = require('../lib/models/user');
 
 module.exports = function (app) {
 	
-	this.info = user.info;
-	this.clientInfo = client.info;
-	
-    return this;
+    this.postUsers = function(req, res) {
+      var user = new User({
+        username: req.body.username,
+        password: req.body.password
+      });
+    
+      user.save(function(err) {
+        if (err)
+          res.send(err);
+    
+        res.json({ message: 'New beer drinker added to the locker room!' });
+      });
+    };
+    
+    this.getUsers = function(req, res) {
+      User.find(function(err, users) {
+        if (err)
+          res.send(err);
+    
+        res.json(users);
+      });
+    };	
+	 
+   return this;
 };

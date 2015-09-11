@@ -1,11 +1,11 @@
 'use strict';
-var auth = require('../lib/oauth2');
+var auth = require('../lib/auth');
 
 module.exports = function (app) {
 	
-	this.authorization = auth.authorization;
-	this.decision = auth.decision;
-	this.token = auth.token;
+	this.isAuthenticated = auth.isAuthenticated;
+	this.isClientAuthenticated = auth.isClientAuthenticated;
+	this.isBearerAuthenticated = auth.isBearerAuthenticated;
 	
-    return this;
+	return this;
 };

@@ -2,21 +2,28 @@
 var express = require('express');
 var consign = require('consign');
 var passport = require('passport');
+var mongoose = require('mongoose');
 var config   = require('config');
 var util     = require('util');
+
+// Connect to the beerlocker MongoDB
+mongoose.connect('mongodb://localhost:27017/beerlocker');
 
 var app = express();
 
 // Express app configuration
 app.set('view engine', 'ejs');
-app.use(require('serve-static')(__dirname + '/var'));
-app.use(require('cookie-parser')());
-app.use(require('body-parser').urlencoded({ extended: true }));
+app.use(require('body-parser').urlencoded({
+     extended: true 
+}));
+app.use(require('express-session')({ 
+  secret: 'Super Secret Session Key',
+  saveUninitialized: true,
+  resave: true
+}));
 
 // Configure passport strategy
 app.use(passport.initialize());
-app.use(passport.session());
-require('./lib/passport-strategy')
 
 // Routes and controllers
 consign({cwd: 'app'})
