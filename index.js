@@ -4,7 +4,6 @@ var consign  = require('consign');
 var passport = require('passport');
 var mongoose = require('mongoose');
 var config   = require('config');
-var util     = require('util');
 
 // Connect to the carbono MongoDB
 mongoose.connect('mongodb://localhost:27017/carbono');
@@ -15,13 +14,13 @@ var app = express();
 app.set('view engine', 'ejs');
 
 app.use(require('body-parser').urlencoded({
-    extended: true 
+    extended: true,
 }));
 
 app.use(require('express-session')({
     secret: 'Super Secret Session Key',
     saveUninitialized: true,
-    resave: true
+    resave: true,
 }));
 
 // Configure passport strategy

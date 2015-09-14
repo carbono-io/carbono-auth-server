@@ -25,14 +25,5 @@ module.exports = function () {
         res.json({message: 'account-manager don\'t implement getUsers'});
     };
 
-    // this.getUsers = function (req, res) {
-    //   User.find(function(err, users) {
-    //     if (err)
-    //       res.send(err);
-    //
-    //     res.json(users);
-    //   });
-    // };
-
     return this;
 };
