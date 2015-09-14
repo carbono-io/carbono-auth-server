@@ -1,6 +1,5 @@
 // Load required packages
-var oauth2orize = require('oauth2orize')
-var User = require('./models/user');
+var oauth2orize = require('oauth2orize');
 var Client = require('./models/client');
 var Token = require('./models/token');
 var Code = require('./models/code');
@@ -52,7 +51,7 @@ server.grant(oauth2orize.grant.code(function(client, redirectUri, user, ares, ca
     value: uid(16),
     clientId: client._id,
     redirectUri: redirectUri,
-    userId: user._id
+    userId: user.code
   });
 
   // Save the auth code and check for errors
@@ -111,11 +110,10 @@ server.exchange(oauth2orize.exchange.code(function(client, code, redirectUri, ca
 // the application's responsibility to authenticate the user and render a dialog
 // to obtain their approval (displaying details about the client requesting
 // authorization).  We accomplish that here by routing through `ensureLoggedIn()`
-// first, and rendering the `dialog` view. 
+// first, and rendering the `dialog` view.
 
 exports.authorization = [
   server.authorization(function(clientId, redirectUri, callback) {
-
     Client.findOne({ id: clientId }, function (err, client) {
       if (err) { return callback(err); }
 
