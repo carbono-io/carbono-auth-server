@@ -1,30 +1,29 @@
 'use strict';
-var User = require('../lib/models/user');
+var UserHelper = require('../lib/models/user-helper');
+var uuid = require('node-uuid');
 
-module.exports = function (app) {
-	
-    this.postUsers = function(req, res) {
-      var user = new User({
-        username: req.body.username,
-        password: req.body.password
-      });
-    
-      user.save(function(err) {
-        if (err)
-          res.send(err);
-    
-        res.json({ message: 'New beer drinker added to the locker room!' });
-      });
+module.exports = function () {
+
+    this.postUsers = function (req, res) {
+        var userHelper = new UserHelper();
+
+        userHelper.createUser({
+            code: uuid.v4(),
+            name: req.body.name,
+            email: req.body.email,
+            password: req.body.password,
+        }).then(
+            function () {
+                res.json({ message: 'User created.' });
+            }, function (err) {
+                res.send(err);
+            }
+        );
     };
-    
-    this.getUsers = function(req, res) {
-      User.find(function(err, users) {
-        if (err)
-          res.send(err);
-    
-        res.json(users);
-      });
-    };	
-	 
-   return this;
+
+    this.getUsers = function (req, res) {
+        res.json({message: 'account-manager don\'t implement getUsers'});
+    };
+
+    return this;
 };
