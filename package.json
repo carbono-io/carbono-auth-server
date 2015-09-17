@@ -14,13 +14,40 @@
     "auth",
     "auth2"
   ],
-  "author": "Daniel Moura",
+  "author": "carbono.io",
   "license": "ISC",
   "homepage": "https://bitbucket.org/carbonoio/carbono-auth-server#readme",
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.13.3",
+    "carbono-json-messages": "0.0.2",
+    "carbono-service-manager": "0.0.4",
+    "colors": "^1.1.2",
+    "config": "^1.16.0",
+    "consign": "^0.1.2",
+    "ejs": "^2.3.4",
     "express": "^4.13.3",
-    "oauth2-server": "^2.4.1",
-    "should": "^7.1.0"
+    "express-session": "^1.11.3",
+    "mongoose": "^4.1.6",
+    "node-uuid": "^1.4.3",
+    "oauth2orize": "^1.0.1",
+    "passport": "^0.3.0",
+    "passport-http": "^0.3.0",
+    "passport-http-bearer": "^1.0.1",
+    "q": "^1.4.1",
+    "request": "^2.61.0"
+  },
+  "devDependencies": {
+    "chai": "3.2.0",
+    "gulp": "3.9.0",
+    "gulp-istanbul": "0.10.0",
+    "gulp-jscs": "2.0.0",
+    "gulp-jshint": "1.11.2",
+    "gulp-mocha": "2.1.3",
+    "gulp-notify": "2.2.0",
+    "jsdoc": "3.3.2",
+    "jshint-stylish": "2.0.1",
+    "mocha": "2.2.5",
+    "sinon": "1.15.4"
   }
 }

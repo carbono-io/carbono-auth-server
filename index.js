@@ -1,33 +1,45 @@
-/**
- * Carbono Authentication Server (based on oauth2-server npm page)
- * 
- * @author Daniel Moura
- */
+'use strict';
+var express  = require('express');
+var consign  = require('consign');
+var passport = require('passport');
+var mongoose = require('mongoose');
+var config   = require('config');
 
-var express = require('express'),
-    bodyParser = require('body-parser'),
-    oauthserver = require('oauth2-server'),
-    carbonoModel = require('./model.js'),
-    should = require('should');
- 
+// Connect to the carbono MongoDB
+mongoose.connect('mongodb://localhost:27017/carbono');
+
 var app = express();
- 
-app.use(bodyParser.urlencoded({ extended: true }));
- 
-app.use(bodyParser.json());
- 
-app.oauth = oauthserver({
-    model: carbonoModel,
-    grants: ['password'],
-    debug: true
+
+// Express app configuration
+app.set('view engine', 'ejs');
+
+app.use(require('body-parser').urlencoded({
+    extended: true,
+}));
+
+app.use(require('express-session')({
+    secret: 'Super Secret Session Key',
+    saveUninitialized: true,
+    resave: true,
+}));
+
+// Configure passport strategy
+app.use(passport.initialize());
+
+// Routes and controllers
+consign({cwd: 'app'})
+    .include('controllers')
+    .include('routes')
+    .into(app);
+
+// Register and Run
+var etcd = require('./lib/service-register');
+var cfg  = config.get('etcd');
+var port = config.get('port');
+var host = config.get('host');
+app.listen(port, function () {
+    console.log('Listening at http://%s:%s',
+    host, port);
+    // Service discovery registration
+    etcd.init(cfg);
 });
- 
-app.all('/oauth/token', app.oauth.grant());
- 
-// app.get('/', app.oauth.authorise(), function (req, res) {
-//   res.send('Secret area');
-// });
- 
-app.use(app.oauth.errorHandler());
- 
-app.listen(3000);
