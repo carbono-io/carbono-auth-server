@@ -18,7 +18,7 @@ app.use(require('body-parser').urlencoded({
 }));
 
 app.use(require('express-session')({
-    secret: 'Super Secret Session Key',
+    secret: 'Yog-Sottoth umara ish abec',
     saveUninitialized: true,
     resave: true,
 }));
