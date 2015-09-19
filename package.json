@@ -33,7 +33,6 @@
     "oauth2orize": "^1.0.1",
     "passport": "^0.3.0",
     "passport-http": "^0.3.0",
-    "passport-http-bearer": "^1.0.1",
     "q": "^1.4.1",
     "request": "^2.61.0"
   },
