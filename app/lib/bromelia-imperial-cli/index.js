@@ -52,4 +52,4 @@ if(isMock){
     this.authenticate = this.remoteAuth;
 }
 
-module.exports = this;
+exports.authenticate = this.authenticate;
