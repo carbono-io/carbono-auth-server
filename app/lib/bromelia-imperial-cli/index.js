@@ -52,4 +52,4 @@ if(isMock){
     authenticate = mock;
 }
 
-exports.authenticate = this.authenticate;
+exports.authenticate = authenticate;
