@@ -8,7 +8,7 @@ if (env != 'undefined' && env === 'test'){
 }
 
 
-var remoteAuth = function (username, password, callback) {
+this.remoteAuth = function (username, password, callback) {
     var userHelper = new UserProfile();
 
     userHelper.setUserInfo({
@@ -41,7 +41,7 @@ var remoteAuth = function (username, password, callback) {
     );
 };
 
-var mock = function (username, password, callback) {
+this.mock = function (username, password, callback) {
     var user = { email : "user@email.com" };
     return callback(null, user);
 };
