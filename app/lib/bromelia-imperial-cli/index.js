@@ -46,10 +46,10 @@ var mock = function (username, password, callback) {
     return callback(null, user);
 };
 
+var authenticate = remoteAuth;
+
 if(isMock){
-    this.authenticate = this.mock;
-} else {
-    this.authenticate = this.remoteAuth;
+    authenticate = mock;
 }
 
 exports.authenticate = this.authenticate;
