@@ -8,7 +8,7 @@ var imperial = require('./bromelia-imperial-cli');
 
 passport.use(new BasicStrategy(
     function (username, password, callback){
-        imperial.auhenticate(username, password, callback);
+        imperial.authenticate(username, password, callback);
     }
 ));
 
