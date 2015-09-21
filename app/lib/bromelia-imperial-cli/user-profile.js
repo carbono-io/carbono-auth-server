@@ -1,62 +1,11 @@
 'use strict';
-
 var q = require('q');
 var request = require('request');
 
-var ProfileUser = function () {
+var UserProfile = function () {
     this.path = 'http://localhost:7888/account-manager';
     return this;
 };
-
-/**
-PARA CRIPTOGRAFIA:
-
--// Load required packages
--var mongoose = require('mongoose');
--var bcrypt = require('bcrypt-nodejs');
--
--// Define our user schema
--var UserSchema = new mongoose.Schema({
--  username: {
--    type: String,
--    unique: true,
--    required: true
--  },
--  password: {
--    type: String,
--    required: true
--  }
--});
--
--// Execute before each user.save() call
--UserSchema.pre('save', function(callback) {
--  var user = this;
--
--  // Break out if the password hasn't changed
--  if (!user.isModified('password')) return callback();
--
--  // Password changed so we need to hash it
--  bcrypt.genSalt(5, function(err, salt) {
--    if (err) return callback(err);
--
--    bcrypt.hash(user.password, salt, null, function(err, hash) {
--      if (err) return callback(err);
--      user.password = hash;
--      callback();
--    });
--  });
--});
--
--UserSchema.methods.verifyPassword = function(password, cb) {
--  bcrypt.compare(password, this.password, function(err, isMatch) {
--    if (err) return cb(err);
--    cb(null, isMatch);
--  });
--};
--
--// Export the Mongoose model
--module.exports = mongoose.model('User', UserSchema);
-*/
 
 var mountProfileReturnMessage = function (profile) {
     var data = {
@@ -91,7 +40,7 @@ var mountProfileReturnMessage = function (profile) {
  * @returns {boolean} true - Operation success
  * @returns {boolean} false - Operation error
  */
-ProfileUser.prototype.createUser = function (data) {
+UserProfile.prototype.createUser = function (data) {
     var deffered = q.defer();
     if (data.code && data.name && data.email && data.password) {
 
@@ -150,7 +99,7 @@ ProfileUser.prototype.createUser = function (data) {
  * @returns {string} data.email[0].type - The type of email address
  * (home, work, etc.).
  */
-ProfileUser.prototype.getProfile = function (data) {
+UserProfile.prototype.getProfile = function (data) {
     var deffered = q.defer();
     if (data.code) {
         var options = {
@@ -192,7 +141,7 @@ ProfileUser.prototype.getProfile = function (data) {
  * @returns {boolean} true - Operation success
  * @returns {boolean} false - Operation error
  */
-ProfileUser.prototype.login = function (data) {
+UserProfile.prototype.login = function (data) {
     var deffered = q.defer();
     if (data.email && data.password) {
         var options = {
@@ -249,7 +198,7 @@ ProfileUser.prototype.login = function (data) {
  * @returns {string} data.email[0].type - The type of email address
  * (home, work, etc.).
  */
-ProfileUser.prototype.userInfo = function (data) {
+UserProfile.prototype.setUserInfo = function (data) {
     var deffered = q.defer();
     if (data.email) {
         var options = {
@@ -291,4 +240,4 @@ ProfileUser.prototype.userInfo = function (data) {
     return deffered.promise;
 };
 
-module.exports = ProfileUser;
+module.exports = UserProfile;
