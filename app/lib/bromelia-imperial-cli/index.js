@@ -1,5 +1,5 @@
 'use strict';
-var UserProfile = require('./user-profile').UserProfile;
+var UserProfile = require('./user-profile');
 
 var env = process.env.NODE_ENV;
 var isMock = false;
@@ -46,10 +46,10 @@ var mock = function (username, password, callback) {
     return callback(null, user);
 };
 
-var authenticate = remoteAuth;
-
 if(isMock){
-    authenticate = mock;
+    this.authenticate = this.mock;
+} else {
+    this.authenticate = this.remoteAuth;
 }
 
-exports.authenticate = authenticate;
+exports.authenticate = this.authenticate;
