@@ -4,6 +4,7 @@ var consign  = require('consign');
 var passport = require('passport');
 var mongoose = require('mongoose');
 var config   = require('config');
+var parser   = require('body-parser');
 
 // Connect to the auth MongoDB as microservices arch state
 mongoose.connect('mongodb://localhost:27017/carbono-auth');
@@ -13,9 +14,10 @@ var app = express();
 // Express app configuration
 app.set('view engine', 'ejs');
 
-app.use(require('body-parser').urlencoded({
+app.use(parser.urlencoded({
     extended: true,
 }));
+app.use(parser.json());
 
 app.use(require('express-session')({
     secret: 'Yog-Sottoth umara ish abec',

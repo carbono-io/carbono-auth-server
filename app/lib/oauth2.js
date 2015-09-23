@@ -87,8 +87,9 @@ server.deserializeClient(function (id, callback) {
 server.grant(oauth2orize.grant.code(
     function (client, redirectUri, user, ares, callback) {
         // Create a new authorization code
+        var uidCode = uid(16);
         var code = new Code({
-            value: uid(16),
+            value: uidCode,
             clientId: client._id,
             redirectUri: redirectUri,
             userId: user.code,
@@ -97,7 +98,7 @@ server.grant(oauth2orize.grant.code(
         // Save the auth code and check for errors
         code.save(function (err) {
             if (err) { return callback(err); }
-            callback(null, code.value);
+            callback(null, uidCode);
         });
     })
 );

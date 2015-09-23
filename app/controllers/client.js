@@ -16,7 +16,7 @@ module.exports = function () {
                 res.send(err);
             }
 
-            res.json({ message: 'Client added to the locker!', data: client });
+            res.json({ message: 'Client registered succesfully!', data: client });
         });
     };
 

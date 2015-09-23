@@ -3,7 +3,7 @@ var q = require('q');
 var request = require('request');
 
 var UserProfile = function () {
-    this.path = 'http://localhost:7888/account-manager';
+    this.path = 'http://localhost:7889/account-manager';
     return this;
 };
 
@@ -13,8 +13,7 @@ var mountProfileReturnMessage = function (profile) {
         code: profile.code,
         displayName: profile.name,
         name: {
-            familyName:
-                profile.name.split(' ')[profile.name.split(' ').length - 1],
+            familyName: profile.name,
             givenName: profile.name,
             middleName: '',
         },
@@ -64,7 +63,7 @@ UserProfile.prototype.createUser = function (data) {
         };
 
         request(options, function (err, res) {
-                if (!err && res.statusCode === 200) {
+                if (!err && res && res.statusCode === 200) {
                     deffered.resolve(true);
                 } else {
                     deffered.reject(false);
@@ -108,11 +107,10 @@ UserProfile.prototype.getProfile = function (data) {
         };
 
         request(options, function (err, res) {
-                if (!err && res.statusCode === 200) {
+                if (!err && res && res.statusCode === 200) {
                     try {
                         var jObj = JSON.parse(res.body);
-                        jObj = JSON.parse(jObj);
-                        var data = jObj.data.items[0].profile;
+                        var data = jObj.data.items[0];
                         deffered.resolve(mountProfileReturnMessage(data));
                     } catch (e) {
                         deffered.reject(false);
@@ -149,10 +147,10 @@ UserProfile.prototype.login = function (data) {
             method: 'POST',
             json: {
                 apiVersion: '1.0',
-                id: '23123-123123123-12312',
+                id: '23123',
                 data:
                     {
-                        id: '1234',
+                        id: '12344',
                         items: [{
                             email: data.email,
                             password: data.password,
@@ -163,8 +161,8 @@ UserProfile.prototype.login = function (data) {
         };
 
         request(options, function (err, res) {
-                if (!err && res.statusCode === 200) {
-                    deffered.resolve();
+                if (!err &&  res && res.statusCode === 200) {
+                    deffered.resolve(res.body.data.items[0]);
                 } else {
                     deffered.reject(res.statusCode);
                 }
@@ -198,30 +196,20 @@ UserProfile.prototype.login = function (data) {
  * @returns {string} data.email[0].type - The type of email address
  * (home, work, etc.).
  */
-UserProfile.prototype.setUserInfo = function (data) {
+UserProfile.prototype.getUserInfo = function (data) {
     var deffered = q.defer();
     if (data.email) {
         var options = {
-            uri: this.path + '/userInfo',
-            method: 'POST',
-            json: {
-                apiVersion: '1.0',
-                id: '23123-123123123-12312',
-                data:
-                    {
-                        id: '1234',
-                        items: [{
-                            email: data.email,
-                        },],
-                    },
-            },
+            uri: this.path + '/users',
+            method: 'GET',
+            headers: {crbEmail: data.email}
         };
 
         request(options, function (err, res) {
-                if (!err && res.statusCode === 200) {
+                if (!err && res && res.statusCode === 200) {
                     try {
-                        var jObj = JSON.parse(res.body);
-                        var data = jObj.data.items[0].profile;
+                        var obj = JSON.parse(res.body);
+                        var data = obj.data.items[0];
                         deffered.resolve(mountProfileReturnMessage(data));
                     } catch (e) {
                         deffered.reject();

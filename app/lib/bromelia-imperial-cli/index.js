@@ -11,7 +11,7 @@ if (env != 'undefined' && env === 'test'){
 this.remoteAuth = function (username, password, callback) {
     var userHelper = new UserProfile();
 
-    userHelper.setUserInfo({
+    userHelper.getUserInfo({
         email: username,
     }).then(
         function (user) {
@@ -23,7 +23,7 @@ this.remoteAuth = function (username, password, callback) {
                 email: username,
                 password: password,
             }).then(
-                function () {
+                function (user) {
                     // Success
                     return callback(null, user);
                 }, function (statusCode) {
@@ -42,7 +42,7 @@ this.remoteAuth = function (username, password, callback) {
 };
 
 this.mock = function (username, password, callback) {
-    var user = { email : "user@email.com" };
+    var user = { email : "email1@email.com" };
     return callback(null, user);
 };
 
