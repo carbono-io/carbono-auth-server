@@ -14,9 +14,9 @@ module.exports = function () {
         client.save(function (err) {
             if (err) {
                 res.send(err);
+            }else{
+                res.json({ message: 'Client registered succesfully!', data: client });
             }
-
-            res.json({ message: 'Client registered succesfully!', data: client });
         });
     };
 
@@ -24,9 +24,9 @@ module.exports = function () {
         Client.find({ userId: req.user.code }, function (err, clients) {
             if (err) {
                 res.send(err);
+            }else{
+                res.json(clients);
             }
-
-            res.json(clients);
         });
     };
 
