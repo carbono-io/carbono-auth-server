@@ -1,5 +1,6 @@
 'use strict';
 var UserProfile = require('./user-profile');
+var q           = require('q');
 
 var env = process.env.NODE_ENV;
 var isMock = false;
@@ -53,3 +54,15 @@ if(isMock){
 }
 
 exports.authenticate = this.authenticate;
+
+exports.findUser = function (userId) {
+    var deferred = q.defer();
+
+    if (userId === '1234') {
+        deferred.resolve();
+    } else {
+        deferred.reject();
+    }
+
+    return deferred.promise;
+};
