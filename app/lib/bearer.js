@@ -43,7 +43,7 @@ exports.createResponse = function (err, user) {
     return null;
 };
 
-exports.validate = function (message) {
+exports.validate = function (message, imperialPath) {
     // TODO maybe:
     // var exceptions = require('carbono-exceptions');
     // exceptions.create(400, 'Malformed request');
@@ -65,7 +65,8 @@ exports.validate = function (message) {
             if (err || !validToken) {
                 deferred.reject(errInvalidToken);
             } else {
-                imperial.findUser(validToken.userId).then(
+                imperial.findUser(validToken.userId, imperialPath)
+                .then(
                     function (user) {
                         deferred.resolve(user);
                     },

@@ -10,7 +10,7 @@ if (env != 'undefined' && env === 'test'){
 
 
 this.remoteAuth = function (username, password, callback) {
-    var userHelper = new UserProfile();
+    var userHelper = new UserProfile('http://localhost:7888/account-manager');
 
     userHelper.getUserInfo({
         email: username,
@@ -55,14 +55,23 @@ if(isMock){
 
 exports.authenticate = this.authenticate;
 
-exports.findUser = function (userId) {
+exports.findUser = function (userId, imperialPath) {
     var deferred = q.defer();
+    var userHelper = new UserProfile(imperialPath);
 
-    if (userId === '1234') {
-        deferred.resolve();
-    } else {
-        deferred.reject();
-    }
+    userHelper.getProfile({code: userId})
+    .then(
+        function (user) {
+            if (user) {
+                deferred.resolve(user);
+            } else {
+                deferred.reject();
+            }
+        },
+        function () {
+            deferred.reject();
+        }
+    );
 
     return deferred.promise;
 };

@@ -2,15 +2,15 @@
 var q = require('q');
 var request = require('request');
 
-var UserProfile = function () {
-    this.path = 'http://localhost:7889/account-manager';
+var UserProfile = function (imperialPath) {
+    this.path = imperialPath;
     return this;
 };
 
 var mountProfileReturnMessage = function (profile) {
     var data = {
         provider: 'carbono-oauth2',
-        code: profile.code,
+        id: profile.code,
         displayName: profile.name,
         name: {
             familyName: profile.name,

@@ -4,7 +4,8 @@ var bearerLib  = require('../lib/bearer');
 module.exports = function () {
 
     this.validate = function (req, res) {
-        bearerLib.validate(req.body).then(
+        bearerLib.validate(req.body, 'http://localhost:7888/account-manager')
+        .then(
             function (user) {
                 res.status(200);
                 res.json(bearerLib.createResponse(null, user));
