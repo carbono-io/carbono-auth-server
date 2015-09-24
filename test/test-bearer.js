@@ -32,20 +32,20 @@ function createTokenStub() {
 }
 
 function createImperialStub() {
+    var imperialStub = sinon.stub(imperial, 'findUser');
+
     var deferredValidUser = q.defer();
     deferredValidUser.resolve({
         code: 'valid_user',
         name: 'fulano',
         email: 'email@email.com',
     });
-
-    var deferredInvalidUser = q.defer();
-    deferredInvalidUser.reject();
-
-    var imperialStub = sinon.stub(imperial, 'findUser');
     imperialStub
         .withArgs('valid_user')
         .returns(deferredValidUser.promise);
+
+    var deferredInvalidUser = q.defer();
+    deferredInvalidUser.reject();
     imperialStub
         .withArgs('invalid_user')
         .returns(deferredInvalidUser.promise);
@@ -65,7 +65,7 @@ describe('[Token bearer]', function () {
             apiVersion: 'fake_version',
             data:
                 {
-                    id: 'fake_id_again',
+                    id: 'fake_id',
                     items:
                         [
                             {
@@ -86,105 +86,81 @@ describe('[Token bearer]', function () {
             this.requestMessage.data.items[0].token = 'valid_token';
 
             var promise = bearer.validate(this.requestMessage);
-            promise.then(
-                function (user) {
-                    should.exist(user);
+            promise
+                .then(function (user) {
+                    user.should.exist;
                     user.should.be.an('object');
 
                     user.should.have.property('name');
-                    should.equal(user.name, 'fulano');
+                    user.name.should.be.equal('fulano');
 
                     user.should.have.property('code');
-                    should.equal(user.code, 'valid_user');
+                    user.code.should.be.equal('valid_user');
 
                     user.should.have.property('email');
-                    should.equal(user.email, 'email@email.com');
-
+                    user.email.should.be.equal('email@email.com');
+                })
+                .done(function () {
                     done();
-                },
-                function (err) {
-                    should.fail(null, null, err);
-                    done();
-                }
-            ).done();
-
-            return promise;
+                });
         });
 
         it('don\'t validate a non-existent token', function (done) {
             this.requestMessage.data.items[0].token = 'non_existent_token';
 
             var promise = bearer.validate(this.requestMessage);
-            promise.then(
-                function (user) {
-                    should.fail(null, null, user);
-                    done();
-                },
-                function (err) {
-                    should.exist(err);
+            promise
+                .catch(function (err) {
+                    err.should.exist;
                     err.should.be.an('object');
 
                     err.should.have.property('code');
-                    should.equal(err.code, 404);
+                    err.code.should.be.equal(404);
 
                     err.should.have.property('message');
-                    should.equal(err.message, 'Invalid token');
-
+                    err.message.should.be.equal('Invalid token');
+                })
+                .done(function () {
                     done();
-                }
-            ).done();
-
-            return promise;
+                });
         });
 
         it('don\'t validate a malformed request', function (done) {
             var promise = bearer.validate(this.requestMessage.data);
-            promise.then(
-                function (user) {
-                    should.fail(null, null, user);
-                    done();
-                },
-                function (err) {
-                    should.exist(err);
+            promise
+                .catch(function (err) {
+                    err.should.exist;
                     err.should.be.an('object');
 
                     err.should.have.property('code');
-                    should.equal(err.code, 400);
+                    err.code.should.be.equal(400);
 
                     err.should.have.property('message');
-                    should.equal(err.message, 'Malformed request');
-
+                    err.message.should.be.equal('Malformed request');
+                })
+                .done(function () {
                     done();
-                }
-            ).done();
-
-            return promise;
+                });
         });
 
         it('don\'t validate a token without an user', function (done) {
             this.requestMessage.data.items[0].token = 'token_without_user';
 
             var promise = bearer.validate(this.requestMessage);
-            promise.then(
-                function (user) {
-                    should.fail(null, null, user);
-                    done();
-                },
-                function (err) {
-                    should.exist(err);
+            promise
+                .catch(function (err) {
+                    err.should.exist;
                     err.should.be.an('object');
 
                     err.should.have.property('code');
-                    should.equal(err.code, 404);
+                    err.code.should.be.equal(404);
 
                     err.should.have.property('message');
-                    should.equal(err.message, 'Invalid token');
-
+                    err.message.should.be.equal('Invalid token');
+                })
+                .done(function () {
                     done();
-                }
-            ).done();
-
-            return promise;
+                });
         });
     });
 
@@ -196,12 +172,9 @@ describe('[Token bearer]', function () {
             };
             var response = bearer.createResponse(error, null);
 
-            should.exist(response);
+            response.should.exist;
             response.should.have.property('error');
-            response.error.should.have.property('code');
-            should.equal(response.error.code, 400);
-            response.error.should.have.property('message');
-            should.equal(response.error.message, 'Malformed request');
+            response.error.should.be.deep.equal(error);
         });
 
         it('creates a message with an user', function () {
@@ -212,18 +185,12 @@ describe('[Token bearer]', function () {
             };
             var response = bearer.createResponse(null, user);
 
-            should.exist(response);
+            response.should.exist;
             response.should.have.property('data');
             response.data.should.have.property('items');
             response.data.items.should.have.length > 0;
             response.data.items[0].should.have.property('userInfo');
-            response.data.items[0].userInfo.should.have.property('code');
-            should.equal(response.data.items[0].userInfo.code, 'valid_user');
-            response.data.items[0].userInfo.should.have.property('name');
-            should.equal(response.data.items[0].userInfo.name, 'fulano');
-            response.data.items[0].userInfo.should.have.property('email');
-            should.equal(
-                response.data.items[0].userInfo.email, 'email@email.com');
+            response.data.items[0].userInfo.should.be.deep.equal(user);
         });
 
         it('doesn\'t create message if the params are null', function () {

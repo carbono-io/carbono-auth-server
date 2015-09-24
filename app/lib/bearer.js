@@ -1,5 +1,11 @@
 'use strict';
 
+/**
+ * This module contains all methods to deal with Bearer Token Authentication.
+ *
+ * @module Token Bearer
+ */
+
 var Token    = require('./models/token');
 var imperial = require('./bromelia-imperial-cli');
 var pjson    = require('../../package.json');
@@ -7,6 +13,13 @@ var CJM      = require('carbono-json-messages');
 var uuid     = require('node-uuid');
 var q        = require('q');
 
+/**
+ * Extract token information from a carbono-json-message.
+ *
+ * @param {Object} message - carbono-json-message containing the token.
+ * @return {string} token
+ * @function
+ */
 var extractToken = function (message) {
     var validStructure = message &&
         message.hasOwnProperty('data') &&
@@ -21,6 +34,15 @@ var extractToken = function (message) {
     return null;
 };
 
+/**
+ * Create a carbono-json-message object to be used inside Response, containing
+ user informations.
+ *
+ * @param {Object} err - Error description, as defined in carbono-json-messages
+ * @param {Object} user - User informations
+ * @return {Object} carbono-json-message ready to be included inside a response.
+ * @function
+ */
 exports.createResponse = function (err, user) {
     if (err || user) {
         var cjm = new CJM({id: uuid.v4(), apiVersion: pjson.version});
@@ -43,11 +65,17 @@ exports.createResponse = function (err, user) {
     return null;
 };
 
+/**
+ * Verify if a token is valid and retrieve the associated user.
+ *
+ * @param {string} message - carbono-json-message from Request containing a
+ token
+ * @param {string} imperialPath - path to access Imperial
+ * @return {Object} promise which will be resolved when an user was found, and
+ rejected when an error occurs or when the token is invalid.
+ * @function
+ */
 exports.validate = function (message, imperialPath) {
-    // TODO maybe:
-    // var exceptions = require('carbono-exceptions');
-    // exceptions.create(400, 'Malformed request');
-    // ?
     var errInvalidToken = {
         code: 404,
         message: 'Invalid token',

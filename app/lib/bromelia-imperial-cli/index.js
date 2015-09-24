@@ -1,15 +1,21 @@
 'use strict';
+
+/**
+ * Helper methods to communicate with Account Manager server (Imperial)
+ *
+ * @module Bromelia Imperial Client
+ */
+
 var UserProfile = require('./user-profile');
 var q           = require('q');
 
 var env = process.env.NODE_ENV;
 var isMock = false;
-if (env != 'undefined' && env === 'test'){
+if (env !== 'undefined' && env === 'test') {
     isMock = true;
 }
 
-
-this.remoteAuth = function (username, password, callback) {
+function remoteAuth(username, password, callback) {
     var userHelper = new UserProfile('http://localhost:7888/account-manager');
 
     userHelper.getUserInfo({
@@ -40,21 +46,28 @@ this.remoteAuth = function (username, password, callback) {
             if (err) { return callback(err); }
         }
     );
-};
-
-this.mock = function (username, password, callback) {
-    var user = { email : "email1@email.com" };
-    return callback(null, user);
-};
-
-if(isMock){
-    this.authenticate = this.mock;
-} else {
-    this.authenticate = this.remoteAuth;
 }
 
-exports.authenticate = this.authenticate;
+function mock(username, password, callback) {
+    var user = { email: 'email1@email.com' };
+    return callback(null, user);
+}
 
+if (isMock) {
+    exports.authenticate = mock;
+} else {
+    exports.authenticate = remoteAuth;
+}
+
+/**
+ * Find an user at account-manager (Imperial).
+ *
+ * @param {string} userId - user identifier
+ * @param {string} imperialPath - path to access Imperial
+ * @return {Object} promise which will be resolved when an user was found, and
+ will be rejected when an error occurs or when the id is invalid.
+ * @function
+ */
 exports.findUser = function (userId, imperialPath) {
     var deferred = q.defer();
     var userHelper = new UserProfile(imperialPath);
