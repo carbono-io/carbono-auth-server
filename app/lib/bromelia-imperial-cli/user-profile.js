@@ -2,15 +2,46 @@
 var q = require('q');
 var request = require('request');
 
+/**
+ * Class that handles requests to the Account Manager module as a middleware
+ * in the communication between Auth Server and ACCM
+ *
+ * @class
+ */
 var UserProfile = function () {
-    this.path = 'http://localhost:7889/account-manager';
+    this.path = 'http://localhost:7888/account-manager';
     return this;
 };
 
+/**
+ * Mouts a default profile data structure to be sent as response
+ *
+ * @function
+ * @param {Object} data - Object containing necessary data
+ * @param {string} data.email - The email of the user
+ * @param {string} data.password - The password of the user
+ * @param {string} data.name - The name of the user
+ *
+ * @returns {Object} data - Object containing the ProfileInfo
+ * @returns {string} data.provider - The provider with which the user
+ * authenticated
+ * @returns {string} data.displayName - The name of this user, suitable for
+ * display.
+ * @returns {Object} data.name - The complete name of the user
+ * @returns {string} data.name.familyName - The family name of this user, or
+ * "last name" in most Western languages.
+ * @returns {string} data.name.givenName - The given name of this user, or
+ * "first name" in most Western languages.
+ * @returns {string} data.name.middleName - The middle name of this user.
+ * @returns {Array} data.email - The list of emails
+ * @returns {string} data.email[0].value - The actual email address.
+ * @returns {string} data.email[0].type - The type of email address
+ * (home, work, etc.).
+ */
 var mountProfileReturnMessage = function (profile) {
     var data = {
         provider: 'carbono-oauth2',
-        code: profile.code,
+        id: profile.code,
         displayName: profile.name,
         name: {
             familyName: profile.name,
@@ -33,16 +64,29 @@ var mountProfileReturnMessage = function (profile) {
  * @param {Object} data - Object containing necessary data
  * @param {string} data.email - The email of the user
  * @param {string} data.password - The password of the user
- * @param {string} data.code - The code of the user
  * @param {string} data.name - The name of the user
  *
- * @returns {boolean} true - Operation success
- * @returns {boolean} false - Operation error
+ * @returns {string} data.code - The error code in case of error
+ * @returns {string} data.message - The error message in case of error
+ * @returns {Object} data - Object containing the ProfileInfo
+ * @returns {string} data.provider - The provider with which the user
+ * authenticated
+ * @returns {string} data.displayName - The name of this user, suitable for
+ * display.
+ * @returns {Object} data.name - The complete name of the user
+ * @returns {string} data.name.familyName - The family name of this user, or
+ * "last name" in most Western languages.
+ * @returns {string} data.name.givenName - The given name of this user, or
+ * "first name" in most Western languages.
+ * @returns {string} data.name.middleName - The middle name of this user.
+ * @returns {Array} data.email - The list of emails
+ * @returns {string} data.email[0].value - The actual email address.
+ * @returns {string} data.email[0].type - The type of email address
+ * (home, work, etc.).
  */
 UserProfile.prototype.createUser = function (data) {
     var deffered = q.defer();
-    if (data.code && data.name && data.email && data.password) {
-
+    if (data.name && data.email && data.password) {
         var options = {
             uri: this.path + '/profiles',
             method: 'POST',
@@ -61,16 +105,44 @@ UserProfile.prototype.createUser = function (data) {
                     },
             },
         };
-
-        request(options, function (err, res) {
-                if (!err && res && res.statusCode === 200) {
-                    deffered.resolve(true);
+        try {
+            request(options, function (err, res) {
+                if (res !== null && !err) {
+                    if (res.statusCode < 300) {
+                        try {
+                            var jsonRes = res.body;
+                            var data = jsonRes.data.items[0];
+                            deffered.resolve(mountProfileReturnMessage(data));
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
+                    } else {
+                        deffered.reject({
+                            code: res.body.error.code,
+                            message: res.body.error.message,
+                        });
+                    }
                 } else {
-                    deffered.reject(false);
+                    deffered.reject({
+                        code: 500,
+                        message: 'Could not create profile',
+                    });
                 }
             });
+        } catch (e) {
+            deffered.reject({
+                code: 400,
+                message: e,
+            });
+        }
     } else {
-        deffered.reject(false);
+        deffered.reject({
+            code: 400,
+            message: 'Malformed Request - Missing name, email or password',
+        });
     }
     return deffered.promise;
 };
@@ -80,8 +152,10 @@ UserProfile.prototype.createUser = function (data) {
  *
  * @function
  * @param {Object} data - Object containing necessary data
- * @param {string} data.code - The code of the user
+ * @param {string} data.code - The code of the profile
  *
+ * @returns {string} data.code - The error code in case of error
+ * @returns {string} data.message - The error message in case of error
  * @returns {Object} data - Object containing the ProfileInfo
  * @returns {string} data.provider - The provider with which the user
  * authenticated
@@ -100,30 +174,125 @@ UserProfile.prototype.createUser = function (data) {
  */
 UserProfile.prototype.getProfile = function (data) {
     var deffered = q.defer();
-    if (data.code) {
+    if (data.code !== null) {
         var options = {
             uri: this.path + '/profiles/' + data.code,
             method: 'GET',
         };
-
-        request(options, function (err, res) {
-                if (!err && res && res.statusCode === 200) {
-                    try {
-                        var jObj = JSON.parse(res.body);
-                        var data = jObj.data.items[0];
-                        deffered.resolve(mountProfileReturnMessage(data));
-                    } catch (e) {
-                        deffered.reject(false);
+        try {
+            request(options, function (err, res) {
+                if (res !== null && !err) {
+                    if (res.statusCode < 300) {
+                        try {
+                            var jsonRes = res.body;
+                            var data = jsonRes.data.items[0];
+                            deffered.resolve(mountProfileReturnMessage(data));
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
+                    } else {
+                        deffered.reject({
+                            code: res.body.error.code,
+                            message: res.body.error.message,
+                        });
                     }
-
-                } else if (res.statusCode === 404) {
-                    deffered.resolve(null);
                 } else {
-                    deffered.reject(false);
+                    deffered.reject({
+                        code: 500,
+                        message: 'Could not get profile',
+                    });
                 }
             });
+        } catch (e) {
+            deffered.reject({
+                code: 500,
+                message: e,
+            });
+        }
     } else {
-        deffered.reject(false);
+        deffered.reject({
+            code: 400,
+            message: 'Malformed Request - Missing profile code',
+        });
+    }
+    return deffered.promise;
+};
+
+/**
+ * Calls AccountManager to get the user profile
+ *
+ * @function
+ * @param {Object} data - Object containing necessary data
+ * @param {string} data.email - The email of the user
+ *
+ * @returns {string} data.code - The error code in case of error
+ * @returns {string} data.message - The error message in case of error
+ * @returns {Object} data - Object containing the ProfileInfo
+ * @returns {string} data.provider - The provider with which the user
+ * authenticated
+ * @returns {string} data.displayName - The name of this user, suitable for
+ * display.
+ * @returns {Object} data.name - The complete name of the user
+ * @returns {string} data.name.familyName - The family name of this user, or
+ * "last name" in most Western languages.
+ * @returns {string} data.name.givenName - The given name of this user, or
+ * "first name" in most Western languages.
+ * @returns {string} data.name.middleName - The middle name of this user.
+ * @returns {Array} data.email - The list of emails
+ * @returns {string} data.email[0].value - The actual email address.
+ * @returns {string} data.email[0].type - The type of email address
+ * (home, work, etc.).
+ */
+UserProfile.prototype.getUserInfo = function (data) {
+    var deffered = q.defer();
+    if (data.email !== null) {
+        var options = {
+            uri: this.path + '/users',
+            method: 'GET',
+            headers: { crbEmail: data.email },
+        };
+
+        try {
+            request(options, function (err, res) {
+                if (res !== null && !err) {
+                    if (res.statusCode < 300) {
+                        try {
+                            var jsonRes = JSON.parse(res.body);
+                            var data = jsonRes.data.items[0];
+                            deffered.resolve(mountProfileReturnMessage(data));
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
+                    } else {
+                        deffered.reject({
+                            code: res.body.error.code,
+                            message: res.body.error.message,
+                        });
+                    }
+                } else {
+                    deffered.reject({
+                        code: 500,
+                        message: 'Could not get user info',
+                    });
+                }
+            });
+        } catch (e) {
+            deffered.reject({
+                code: 500,
+                message: e,
+            });
+        }
+    } else {
+        deffered.reject({
+            code: 400,
+            message: 'Malformed Request - Missing user email',
+        });
     }
     return deffered.promise;
 };
@@ -159,71 +328,48 @@ UserProfile.prototype.login = function (data) {
                     },
             },
         };
-
-        request(options, function (err, res) {
+        try {
+            request(options, function (err, res) {
+                if (res !== null && !err) {
+                    if (res.statusCode < 300) {
+                        try {
+                            var jsonRes = res.body;
+                            deffered.resolve(jsonRes.data.items[0]);
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
+                    } else {
+                        deffered.reject({
+                            code: res.body.error.code,
+                            message: res.body.error.message,
+                        });
+                    }
+                } else {
+                    deffered.reject({
+                        code: 500,
+                        message: 'Could connect to module',
+                    });
+                }
                 if (!err &&  res && res.statusCode === 200) {
                     deffered.resolve(res.body.data.items[0]);
                 } else {
                     deffered.reject(res.statusCode);
                 }
             });
-    } else {
-        deffered.reject();
-    }
-    return deffered.promise;
-};
-
-/**
- * Calls AccountManager to get the user profile
- *
- * @function
- * @param {Object} data - Object containing necessary data
- * @param {string} data.email - The email of the user
- *
- * @returns {Object} data - Object containing the ProfileInfo
- * @returns {string} data.provider - The provider with which the user
- * authenticated
- * @returns {string} data.displayName - The name of this user, suitable for
- * display.
- * @returns {Object} data.name - The complete name of the user
- * @returns {string} data.name.familyName - The family name of this user, or
- * "last name" in most Western languages.
- * @returns {string} data.name.givenName - The given name of this user, or
- * "first name" in most Western languages.
- * @returns {string} data.name.middleName - The middle name of this user.
- * @returns {Array} data.email - The list of emails
- * @returns {string} data.email[0].value - The actual email address.
- * @returns {string} data.email[0].type - The type of email address
- * (home, work, etc.).
- */
-UserProfile.prototype.getUserInfo = function (data) {
-    var deffered = q.defer();
-    if (data.email) {
-        var options = {
-            uri: this.path + '/users',
-            method: 'GET',
-            headers: {crbEmail: data.email}
-        };
-
-        request(options, function (err, res) {
-                if (!err && res && res.statusCode === 200) {
-                    try {
-                        var obj = JSON.parse(res.body);
-                        var data = obj.data.items[0];
-                        deffered.resolve(mountProfileReturnMessage(data));
-                    } catch (e) {
-                        deffered.reject();
-                    }
-                } else {
-                    if (res.statusCode === 404) {
-                        deffered.resolve(null);
-                    } else {
-                        deffered.reject();
-                    }
-                }
+        } catch (e) {
+            deffered.reject({
+                code: 500,
+                message: e,
             });
+        }
     } else {
-        deffered.reject();
+        deffered.reject({
+            code: 400,
+            message: 'Malformed Request - Missing user email or password',
+        });
     }
     return deffered.promise;
 };
