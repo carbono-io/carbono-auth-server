@@ -38,8 +38,9 @@ var UserProfile = function () {
  * @returns {string} data.email[0].type - The type of email address
  * (home, work, etc.).
  */
-var mountProfileReturnMessage = function (profile) {
-    var data = {
+var mountProfileReturnMessage = function (data) {
+    var profile = data.profile;
+    var ret = {
         provider: 'carbono-oauth2',
         id: profile.code,
         displayName: profile.name,
@@ -54,7 +55,7 @@ var mountProfileReturnMessage = function (profile) {
         },],
         photos: [],
     };
-    return data;
+    return ret;
 };
 
 /**
@@ -120,10 +121,18 @@ UserProfile.prototype.createUser = function (data) {
                             });
                         }
                     } else {
-                        deffered.reject({
-                            code: res.body.error.code,
-                            message: res.body.error.message,
-                        });
+                        try {
+                            jsonRes = res.body;
+                            deffered.reject({
+                                code: jsonRes.error.code,
+                                message: jsonRes.error.message,
+                            });
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
                     }
                 } else {
                     deffered.reject({
@@ -174,7 +183,7 @@ UserProfile.prototype.createUser = function (data) {
  */
 UserProfile.prototype.getProfile = function (data) {
     var deffered = q.defer();
-    if (data.code !== null) {
+    if (data.code !== null && data.code !== undefined) {
         var options = {
             uri: this.path + '/profiles/' + data.code,
             method: 'GET',
@@ -184,7 +193,7 @@ UserProfile.prototype.getProfile = function (data) {
                 if (res !== null && !err) {
                     if (res.statusCode < 300) {
                         try {
-                            var jsonRes = res.body;
+                            var jsonRes = JSON.parse(res.body);
                             var data = jsonRes.data.items[0];
                             deffered.resolve(mountProfileReturnMessage(data));
                         } catch (e) {
@@ -194,10 +203,18 @@ UserProfile.prototype.getProfile = function (data) {
                             });
                         }
                     } else {
-                        deffered.reject({
-                            code: res.body.error.code,
-                            message: res.body.error.message,
-                        });
+                        try {
+                            jsonRes = JSON.parse(res.body);
+                            deffered.reject({
+                                code: jsonRes.error.code,
+                                message: jsonRes.error.message,
+                            });
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
                     }
                 } else {
                     deffered.reject({
@@ -270,10 +287,18 @@ UserProfile.prototype.getUserInfo = function (data) {
                             });
                         }
                     } else {
-                        deffered.reject({
-                            code: res.body.error.code,
-                            message: res.body.error.message,
-                        });
+                        try {
+                            jsonRes = JSON.parse(res.body);
+                            deffered.reject({
+                                code: jsonRes.error.code,
+                                message: jsonRes.error.message,
+                            });
+                        } catch (e) {
+                            deffered.reject({
+                                code: 500,
+                                message: e,
+                            });
+                        }
                     }
                 } else {
                     deffered.reject({
