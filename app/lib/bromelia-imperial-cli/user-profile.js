@@ -9,13 +9,8 @@ var etcd    = require('../../../lib/etcd-manager');
  *
  * @class
  */
-<<<<<<< Updated upstream
-var UserProfile = function (imperialPath) {
-    this.path = imperialPath;
-=======
 var UserProfile = function () {
     this.serviceUrl = etcd.getServiceUrl('accm');
->>>>>>> Stashed changes
     return this;
 };
 
