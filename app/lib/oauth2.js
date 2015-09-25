@@ -163,18 +163,40 @@ server.exchange(oauth2orize.exchange.code(
 exports.authorization = [
     server.authorization(function (clientId, redirectUri, callback) {
         Client.findOne({ id: clientId }, function (err, client) {
-            if (err) { return callback(err); }
-
+            if (err) { 
+                return callback(err); 
+            }
+            // IDE specific behavior
+            if (client.name=='IDE') {
+                var uidCode = uid(16);
+                var code = new Code({
+                    value: uidCode,
+                    clientId: client._id,
+                    redirectUri: redirectUri,
+                    userId: client.userId,
+                });
+                code.save(function (err) {
+                    if (err) { return callback(err); }
+                });
+                redirectUri += '?code=' + uidCode;
+            }
             return callback(null, client, redirectUri);
         });
     }),
 
     function (req, res) {
-        res.render('dialog',
-            { transactionID: req.oauth2.transactionID,
-            user: req.user,
-            client: req.oauth2.client, }
-        );
+        var client = req.oauth2.client;
+        // IDE specific response
+        if (client.name=='IDE') {
+            res.redirect(req.oauth2.redirectURI);
+        } else {
+            // Normal response for oauth2
+            res.render('dialog',
+                { transactionID: req.oauth2.transactionID,
+                user: req.user,
+                client: client, }
+            );
+        }
     },
 ];
 

@@ -35,7 +35,9 @@
     "passport-http": "^0.3.0",
     "passport-oauth2-client-password": "^0.1.2",
     "q": "^1.4.1",
-    "request": "^2.61.0"
+    "request": "^2.61.0",
+    "sinon": "^1.17.0",
+    "sinon-chai": "^2.8.0"
   },
   "devDependencies": {
     "chai": "3.2.0",
