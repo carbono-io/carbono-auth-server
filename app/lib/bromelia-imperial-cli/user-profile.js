@@ -1,6 +1,7 @@
 'use strict';
 var q = require('q');
 var request = require('request');
+var etcd    = require('../../../lib/etcd-manager');
 
 /**
  * Class that handles requests to the Account Manager module as a middleware
@@ -8,8 +9,13 @@ var request = require('request');
  *
  * @class
  */
+<<<<<<< Updated upstream
 var UserProfile = function (imperialPath) {
     this.path = imperialPath;
+=======
+var UserProfile = function () {
+    this.serviceUrl = etcd.getServiceUrl('accm');
+>>>>>>> Stashed changes
     return this;
 };
 
@@ -89,7 +95,7 @@ UserProfile.prototype.createUser = function (data) {
     var deffered = q.defer();
     if (data.name && data.email && data.password) {
         var options = {
-            uri: this.path + '/profiles',
+            uri: this.serviceUrl + '/profiles',
             method: 'POST',
             json: {
                 apiVersion: '1.0',
@@ -185,7 +191,7 @@ UserProfile.prototype.getProfile = function (data) {
     var deffered = q.defer();
     if (data.code !== null && data.code !== undefined) {
         var options = {
-            uri: this.path + '/profiles/' + data.code,
+            uri: this.serviceUrl + '/profiles/' + data.code,
             method: 'GET',
         };
         try {
@@ -267,7 +273,7 @@ UserProfile.prototype.getUserInfo = function (data) {
     var deffered = q.defer();
     if (data.email !== null) {
         var options = {
-            uri: this.path + '/users',
+            uri: this.serviceUrl + '/users',
             method: 'GET',
             headers: { crbEmail: data.email },
         };
@@ -337,7 +343,7 @@ UserProfile.prototype.login = function (data) {
     var deffered = q.defer();
     if (data.email && data.password) {
         var options = {
-            uri: this.path + '/login',
+            uri: this.serviceUrl + '/login',
             method: 'POST',
             json: {
                 apiVersion: '1.0',

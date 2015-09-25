@@ -114,7 +114,9 @@ server.exchange(oauth2orize.exchange.code(
     function (client, code, redirectUri, callback) {
         Code.findOne({ value: code }, function (err, authCode) {
             if (err) { return callback(err); }
-            if (authCode === undefined) { return callback(null, false); }
+            if (!authCode || authCode === undefined) { 
+                return callback(null, false); 
+            }
             if (client._id.toString() !== authCode.clientId) {
                 return callback(null, false);
             }

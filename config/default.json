@@ -2,8 +2,12 @@
     "port" : 7892,
     "host" : "127.0.0.1",
     "etcd": {
-        "serverPort": 7892,
-        "serverAddress": "127.0.0.1",
-        "serviceAlias" : "auth"
+        "host": "127.0.0.1",
+        "port": 7892,
+        "key" : "auth",
+        "alias" : "Carbono OAuth2 Server",
+        "hosts" : [
+            {"key" : "accm", "alias" : "Bromelia Imperial"}
+        ]
     }
 }
