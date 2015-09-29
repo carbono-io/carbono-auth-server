@@ -53,3 +53,18 @@ this.authenticate = function (username, password, callback) {
 };
 
 exports.authenticate = this.authenticate;
+
+/**
+ * Find an user at account-manager (Imperial).
+ *
+ * @param {string} userId - user identifier
+Add a comment to this line
+ * @param {string} imperialPath - path to access Imperial
+ * @return {Object} promise which will be resolved when an user was found, and
+ will be rejected when an error occurs or when the id is invalid.
+ * @function
+ */
+exports.findUser = function (userId, imperialPath) {
+    var userHelper = new UserProfile(imperialPath);
+    return userHelper.getProfile({code: userId});
+};

@@ -2,6 +2,11 @@
 var q = require('q');
 var request = require('request');
 var etcd    = require('../../../lib/etcd-manager');
+var NotFoundError = require('../exceptions/not-found');
+var CJMError      = require('../exceptions/cjm-error');
+var MalformedRequestError = require('../exceptions/malformed-request');
+var InternalServerError =
+    require('../exceptions/internal-server-error');
 
 /**
  * Class that handles requests to the Account Manager module as a middleware
@@ -9,8 +14,8 @@ var etcd    = require('../../../lib/etcd-manager');
  *
  * @class
  */
-var UserProfile = function () {
-    this.serviceUrl = etcd.getServiceUrl('accm');
+var UserProfile = function (serviceUrl) {
+    this.serviceUrl = serviceUrl || etcd.getServiceUrl('accm');
     return this;
 };
 
@@ -192,50 +197,31 @@ UserProfile.prototype.getProfile = function (data) {
         try {
             request(options, function (err, res) {
                 if (res !== null && !err) {
-                    if (res.statusCode < 300) {
-                        try {
+                    try {
+                        if (res.statusCode < 300) {
                             var jsonRes = JSON.parse(res.body);
                             var data = jsonRes.data.items[0];
                             deffered.resolve(mountProfileReturnMessage(data));
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
-                        }
-                    } else {
-                        try {
+                        } else {
                             jsonRes = JSON.parse(res.body);
-                            deffered.reject({
-                                code: jsonRes.error.code,
-                                message: jsonRes.error.message,
-                            });
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
+                            deffered.reject(new CJMError(jsonRes.error));
                         }
+                    } catch (e) {
+                        deffered.reject(new InternalServerError(e));
                     }
                 } else {
-                    deffered.reject({
-                        code: 500,
-                        message: 'Could not get profile',
-                    });
+                    deffered.reject(
+                        new NotFoundError('Could not get profile'));
                 }
             });
         } catch (e) {
-            deffered.reject({
-                code: 500,
-                message: e,
-            });
+            deffered.reject(new InternalServerError(e));
         }
     } else {
-        deffered.reject({
-            code: 400,
-            message: 'Malformed Request - Missing profile code',
-        });
+        deffered.reject(
+            new MalformedRequestError('Missing profile code'));
     }
+
     return deffered.promise;
 };
 
