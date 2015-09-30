@@ -93,9 +93,8 @@ exports.validate = function (message, imperialPath) {
                         function (user) {
                             deferred.resolve(user);
                         },
-                        function () {
-                            deferred.reject(
-                                new NotFoundError('Invalid token'));
+                        function (err) {
+                            deferred.reject(err);
                         }
                     );
             }

@@ -8,6 +8,7 @@ var sinon    = require('sinon');
 var q        = require('q');
 var MalformedRequestError = require('../app/lib/exceptions/malformed-request');
 var NotFoundError         = require('../app/lib/exceptions/not-found');
+var CJMError              = require('../app/lib/exceptions/cjm-error');
 
 var should = chai.should();
 
@@ -47,7 +48,10 @@ function createImperialStub() {
         .returns(deferredValidUser.promise);
 
     var deferredInvalidUser = q.defer();
-    deferredInvalidUser.reject();
+    deferredInvalidUser.reject(new CJMError({
+        code: 404,
+        message: 'Invalid User',
+    }));
     imperialStub
         .withArgs('invalid_user')
         .returns(deferredInvalidUser.promise);
@@ -142,9 +146,8 @@ describe('[Token bearer]', function () {
             var promise = bearer.validate(this.requestMessage);
             promise
                 .catch(function (err) {
-                    console.log(err);
                     err.should.exist;
-                    err.should.be.an.instanceof(NotFoundError);
+                    err.should.be.an.instanceof(CJMError);
                 })
                 .done(function () {
                     done();
