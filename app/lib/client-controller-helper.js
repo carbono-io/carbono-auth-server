@@ -1,11 +1,11 @@
 'use strict';
-var Client = require('../models/client');
+var Client = require('./models/client');
 var q = require('q');
-var MalformedRequestError = require('../exceptions/malformed-request');
-var NotFoundError = require('../exceptions/not-found');
-var MalformedRequestError = require('../exceptions/malformed-request');
+var MalformedRequestError = require('./exceptions/malformed-request');
+var NotFoundError = require('./exceptions/not-found');
+var MalformedRequestError = require('./exceptions/malformed-request');
 var InternalServerError =
-    require('../exceptions/internal-server-error');
+    require('./exceptions/internal-server-error');
 
 /**
  * Helper for the client Controller
@@ -73,7 +73,6 @@ ClientHelper.prototype.createClient = function (data) {
             client.id = data.id;
             client.secret = data.secret;
             client.userId = data.code;
-
             client.save(function (err) {
                 if (err) {
                     deffered.reject(new InternalServerError(err));
@@ -107,31 +106,18 @@ ClientHelper.prototype.createClient = function (data) {
  * @returns {string} clients.secret - The secret of the client
  * @returns {string} clients.userId - The userId of the client
  */
-ClientHelper.prototype.getClient = function (data) {
+ClientHelper.prototype.getClients = function (data) {
     var deffered = q.defer();
-    var missingProperties =
-        this.verifyParams(
-            data, ['code']);
-    if (missingProperties.length) {
-        var errMessage = '';
-        missingProperties.forEach(function (prop) {
-            errMessage += 'Malformed request: ' + prop +
-            ' is required.\n';
+    try {
+        Client.find({}, function (err, clients) {
+            if (err) {
+                deffered.reject(new NotFoundError(err));
+            } else {
+                deffered.resolve(clients);
+            }
         });
-        deffered.reject(
-            new MalformedRequestError(errMessage));
-    } else {
-        try {
-            Client.find({ userId: data.code }, function (err, clients) {
-                if (err) {
-                    deffered.reject(new NotFoundError(err));
-                } else {
-                    deffered.resolve(clients);
-                }
-            });
-        } catch (e) {
-            deffered.reject(new InternalServerError(e));
-        }
+    } catch (e) {
+        deffered.reject(new InternalServerError(e));
     }
     return deffered.promise;
 };

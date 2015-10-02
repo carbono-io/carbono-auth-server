@@ -25,21 +25,28 @@ module.exports = function () {
             clientHelper.createClient(req.body)
             .then(
                 function (data) {
+                    res.statusCode = 201;
                     res.json(data);
+                    res.end();
                 },
                 function (error) {
+                    res.statusCode = error.statusCode;
                     res.json(error);
+                    res.end();
                 }
             ).catch(function (error) {
+                res.statusCode = error.statusCode;
                 res.json(error);
+                res.end();
             });
         } else {
+            res.statusCode = 400;
             res.json({
                 code: 400,
                 message: 'Body is empty',
             });
+            res.end();
         }
-        res.end();
     };
 
     /**
@@ -56,25 +63,23 @@ module.exports = function () {
      */
     this.getClients = function (req, res) {
         var clientHelper = new ClientHelper();
-        if (req.body !== null) {
-            clientHelper.getClient(req.body)
-            .then(
-                function (data) {
-                    res.json(data);
-                },
-                function (error) {
-                    res.json(error);
-                }
-            ).catch(function (error) {
+        clientHelper.getClients(req.body)
+        .then(
+            function (data) {
+                res.statusCode = 200;
+                res.json(data);
+                res.end();
+            },
+            function (error) {
+                res.statusCode = error.statusCode;
                 res.json(error);
-            });
-        } else {
-            res.json({
-                code: 400,
-                message: 'Body is empty',
-            });
-        }
-        res.end();
+                res.end();
+            }
+        ).catch(function (error) {
+            res.statusCode = error.statusCode;
+            res.json(error);
+            res.end();
+        });
     };
 
     return this;

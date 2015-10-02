@@ -114,8 +114,8 @@ server.exchange(oauth2orize.exchange.code(
     function (client, code, redirectUri, callback) {
         Code.findOne({ value: code }, function (err, authCode) {
             if (err) { return callback(err); }
-            if (!authCode || authCode === undefined) { 
-                return callback(null, false); 
+            if (!authCode || authCode === undefined) {
+                return callback(null, false);
             }
             if (client._id.toString() !== authCode.clientId) {
                 return callback(null, false);
@@ -165,11 +165,11 @@ server.exchange(oauth2orize.exchange.code(
 exports.authorization = [
     server.authorization(function (clientId, redirectUri, callback) {
         Client.findOne({ id: clientId }, function (err, client) {
-            if (err) { 
-                return callback(err); 
+            if (err) {
+                return callback(err);
             }
             // IDE specific behavior
-            if (client.name=='IDE') {
+            if (client.name === 'IDE') {
                 var uidCode = uid(16);
                 var code = new Code({
                     value: uidCode,
@@ -189,7 +189,7 @@ exports.authorization = [
     function (req, res) {
         var client = req.oauth2.client;
         // IDE specific response
-        if (client.name=='IDE') {
+        if (client.name === 'IDE') {
             res.redirect(req.oauth2.redirectURI);
         } else {
             // Normal response for oauth2

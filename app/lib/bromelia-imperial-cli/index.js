@@ -1,4 +1,8 @@
 'use strict';
+var q = require('q');
+var NotFoundError = require('../exceptions/not-found');
+var InternalServerError =
+    require('../exceptions/internal-server-error');
 
 /**
  * Helper methods to communicate with Account Manager server (Imperial)
@@ -27,9 +31,9 @@ var UserProfile = require('./user-profile');
    * @param {BasicStrategyCallback} callback for BasicStrategy
    * @function
    */
-exports.authenticate = function (username, password, callback) {
+exports.authenticate = function (username, password) {
+    var deffered = q.defer();
     var userHelper = new UserProfile();
-
     userHelper.getUserInfo({
         email: username,
     }).then(
@@ -43,25 +47,32 @@ exports.authenticate = function (username, password, callback) {
                     function (user) {
                         if (user !== null) {
                             // Success
+                            deffered.resolve(user);
                             return callback(null, user);
                         } else {
+                            deffered.reject(
+                                new NotFoundError('Invalid password'));
                             return callback(null, false);
                         }
                     }, function (err) {
                         return callback(err);
                     }
-                );
+                ).catch(function (err) {
+                    deffered.reject(
+                        new InternalServerError(err));
+                });
             } else {
-                // No user found with that username
-                return callback(null, false);
+                deffered.reject(new NotFoundError('Email not found!'));
             }
         }, function (err) {
-            console.log(err);
-            if (err !== null) {
-                return callback(err);
-            }
+            deffered.reject(
+                new InternalServerError(err));
         }
-    );
+    ).catch(function (err) {
+        deffered.reject(
+            new InternalServerError(err));
+    });
+    return deffered.promise;
 };
 
 /**
