@@ -19,6 +19,10 @@ module.exports = function () {
                     res.json(bearerLib.createResponse(err, null));
                 }
             )
+            .catch(function (error) {
+                res.status(500);
+                res.json(bearerLib.createResponse(error, null));
+            })
             .done(function () {
                 res.end();
             });
