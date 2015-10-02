@@ -1,7 +1,15 @@
 'use strict';
 var q = require('q');
 var request = require('request');
+var CJM     = require('carbono-json-messages');
+var uuid    = require('uuid');
 var etcd    = require('../../../lib/etcd-manager');
+var pjson   = require('../../../package.json');
+var NotFoundError = require('../exceptions/not-found');
+var CJMError      = require('../exceptions/cjm-error');
+var MalformedRequestError = require('../exceptions/malformed-request');
+var InternalServerError =
+    require('../exceptions/internal-server-error');
 
 /**
  * Class that handles requests to the Account Manager module as a middleware
@@ -9,8 +17,8 @@ var etcd    = require('../../../lib/etcd-manager');
  *
  * @class
  */
-var UserProfile = function () {
-    this.serviceUrl = etcd.getServiceUrl('accm');
+var UserProfile = function (serviceUrl) {
+    this.serviceUrl = serviceUrl || etcd.getServiceUrl('accm');
     return this;
 };
 
@@ -60,104 +68,6 @@ var mountProfileReturnMessage = function (data) {
 };
 
 /**
- * Calls AccountManager to create a user with the given data
- *
- * @function
- * @param {Object} data - Object containing necessary data
- * @param {string} data.email - The email of the user
- * @param {string} data.password - The password of the user
- * @param {string} data.name - The name of the user
- *
- * @returns {string} data.code - The error code in case of error
- * @returns {string} data.message - The error message in case of error
- * @returns {Object} data - Object containing the ProfileInfo
- * @returns {string} data.provider - The provider with which the user
- * authenticated
- * @returns {string} data.displayName - The name of this user, suitable for
- * display.
- * @returns {Object} data.name - The complete name of the user
- * @returns {string} data.name.familyName - The family name of this user, or
- * "last name" in most Western languages.
- * @returns {string} data.name.givenName - The given name of this user, or
- * "first name" in most Western languages.
- * @returns {string} data.name.middleName - The middle name of this user.
- * @returns {Array} data.email - The list of emails
- * @returns {string} data.email[0].value - The actual email address.
- * @returns {string} data.email[0].type - The type of email address
- * (home, work, etc.).
- */
-UserProfile.prototype.createUser = function (data) {
-    var deffered = q.defer();
-    if (data.name && data.email && data.password) {
-        var options = {
-            uri: this.serviceUrl + '/profiles',
-            method: 'POST',
-            json: {
-                apiVersion: '1.0',
-                id: '23123-123123123-12312',
-                data:
-                    {
-                        id: '1234',
-                        items: [{
-                            code: data.code,
-                            name: data.name,
-                            email: data.email,
-                            password: data.password,
-                        },],
-                    },
-            },
-        };
-        try {
-            request(options, function (err, res) {
-                if (res !== null && !err) {
-                    if (res.statusCode < 300) {
-                        try {
-                            var jsonRes = res.body;
-                            var data = jsonRes.data.items[0];
-                            deffered.resolve(mountProfileReturnMessage(data));
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
-                        }
-                    } else {
-                        try {
-                            jsonRes = res.body;
-                            deffered.reject({
-                                code: jsonRes.error.code,
-                                message: jsonRes.error.message,
-                            });
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
-                        }
-                    }
-                } else {
-                    deffered.reject({
-                        code: 500,
-                        message: 'Could not create profile',
-                    });
-                }
-            });
-        } catch (e) {
-            deffered.reject({
-                code: 400,
-                message: e,
-            });
-        }
-    } else {
-        deffered.reject({
-            code: 400,
-            message: 'Malformed Request - Missing name, email or password',
-        });
-    }
-    return deffered.promise;
-};
-
-/**
  * Calls AccountManager to get the user profile
  *
  * @function
@@ -192,50 +102,32 @@ UserProfile.prototype.getProfile = function (data) {
         try {
             request(options, function (err, res) {
                 if (res !== null && !err) {
-                    if (res.statusCode < 300) {
-                        try {
+                    try {
+                        if (res.statusCode < 300) {
                             var jsonRes = JSON.parse(res.body);
                             var data = jsonRes.data.items[0];
                             deffered.resolve(mountProfileReturnMessage(data));
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
-                        }
-                    } else {
-                        try {
+                        } else {
                             jsonRes = JSON.parse(res.body);
-                            deffered.reject({
-                                code: jsonRes.error.code,
-                                message: jsonRes.error.message,
-                            });
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
+                            deffered.reject(new CJMError(jsonRes.error));
                         }
+                    } catch (e) {
+                        deffered.reject(new InternalServerError(e));
                     }
                 } else {
-                    deffered.reject({
-                        code: 500,
-                        message: 'Could not get profile',
-                    });
+                    // TODO 'err' must be handled here
+                    deffered.reject(
+                        new NotFoundError('Could not get profile'));
                 }
             });
         } catch (e) {
-            deffered.reject({
-                code: 500,
-                message: e,
-            });
+            deffered.reject(new InternalServerError(e));
         }
     } else {
-        deffered.reject({
-            code: 400,
-            message: 'Malformed Request - Missing profile code',
-        });
+        deffered.reject(
+            new MalformedRequestError('Missing profile code'));
     }
+
     return deffered.promise;
 };
 
@@ -276,50 +168,33 @@ UserProfile.prototype.getUserInfo = function (data) {
         try {
             request(options, function (err, res) {
                 if (res !== null && !err) {
-                    if (res.statusCode < 300) {
-                        try {
+                    try {
+                        if (res.statusCode < 300) {
                             var jsonRes = JSON.parse(res.body);
                             var data = jsonRes.data.items[0];
                             deffered.resolve(mountProfileReturnMessage(data));
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
-                        }
-                    } else {
-                        try {
+                        } else if (res.statusCode === 404) {
+                            deffered.resolve();
+                        } else {
                             jsonRes = JSON.parse(res.body);
-                            deffered.reject({
-                                code: jsonRes.error.code,
-                                message: jsonRes.error.message,
-                            });
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
+                            deffered.reject(new CJMError(jsonRes.error));
                         }
+                    } catch (e) {
+                        deffered.reject(new InternalServerError(e));
                     }
                 } else {
-                    deffered.reject({
-                        code: 500,
-                        message: 'Could not get user info',
-                    });
+                    // TODO 'err' must be handled here
+                    deffered.reject(
+                        new NotFoundError('Could not get user info'));
                 }
             });
         } catch (e) {
-            deffered.reject({
-                code: 500,
-                message: e,
-            });
+            deffered.reject(new InternalServerError(e));
         }
     } else {
-        deffered.reject({
-            code: 400,
-            message: 'Malformed Request - Missing user email',
-        });
+        deffered.reject(new MalformedRequestError('Missing user email'));
     }
+
     return deffered.promise;
 };
 
@@ -336,66 +211,50 @@ UserProfile.prototype.getUserInfo = function (data) {
  */
 UserProfile.prototype.login = function (data) {
     var deffered = q.defer();
+
     if (data.email && data.password) {
+        var cjm = new CJM({apiVersion: pjson.version});
+        cjm.setData({
+            id: uuid.v4(),
+            items: [{
+                email: data.email,
+                password: data.password,
+            },],
+        });
+
         var options = {
             uri: this.serviceUrl + '/login',
             method: 'POST',
-            json: {
-                apiVersion: '1.0',
-                id: '23123',
-                data:
-                    {
-                        id: '12344',
-                        items: [{
-                            email: data.email,
-                            password: data.password,
-                        },],
-
-                    },
-            },
+            json: cjm.toObject(),
         };
+
         try {
             request(options, function (err, res) {
                 if (res !== null && !err) {
-                    if (res.statusCode < 300) {
-                        try {
+                    try {
+                        if (res.statusCode < 300) {
                             var jsonRes = res.body;
                             deffered.resolve(jsonRes.data.items[0]);
-                        } catch (e) {
-                            deffered.reject({
-                                code: 500,
-                                message: e,
-                            });
+                        } else if (res.statusCode === 404) {
+                            deffered.resolve();
+                        } else {
+                            deffered.reject(new CJMError(res.body.error));
                         }
-                    } else {
-                        deffered.reject({
-                            code: res.body.error.code,
-                            message: res.body.error.message,
-                        });
+                    } catch (e) {
+                        deffered.reject(new InternalServerError(e));
                     }
                 } else {
-                    deffered.reject({
-                        code: 500,
-                        message: 'Could connect to module',
-                    });
-                }
-                if (!err &&  res && res.statusCode === 200) {
-                    deffered.resolve(res.body.data.items[0]);
-                } else {
-                    deffered.reject(res.statusCode);
+                    // TODO 'err' must be handled here
+                    deffered.reject(
+                        new NotFoundError('Could not validate login'));
                 }
             });
         } catch (e) {
-            deffered.reject({
-                code: 500,
-                message: e,
-            });
+            deffered.reject(new InternalServerError(e));
         }
     } else {
-        deffered.reject({
-            code: 400,
-            message: 'Malformed Request - Missing user email or password',
-        });
+        deffered.reject(
+            new MalformedRequestError('Missing user email or password'));
     }
     return deffered.promise;
 };

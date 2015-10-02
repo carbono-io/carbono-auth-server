@@ -6,12 +6,15 @@
  * @module Token Bearer
  */
 
-var Token    = require('./models/token');
-var imperial = require('./bromelia-imperial-cli');
-var pjson    = require('../../package.json');
-var CJM      = require('carbono-json-messages');
-var uuid     = require('node-uuid');
-var q        = require('q');
+var MalformedRequestError = require('./exceptions/malformed-request');
+var NotFoundError         = require('./exceptions/not-found');
+var Token                 = require('./models/token');
+var imperial              = require('./bromelia-imperial-cli');
+var pjson                 = require('../../package.json');
+
+var CJM    = require('carbono-json-messages');
+var uuid   = require('node-uuid');
+var q      = require('q');
 
 /**
  * Extract token information from a carbono-json-message.
@@ -48,16 +51,17 @@ exports.createResponse = function (err, user) {
         var cjm = new CJM({id: uuid.v4(), apiVersion: pjson.version});
 
         if (err) {
-            cjm.setError(err);
+            cjm.setError({
+                code: err.statusCode,
+                message: err.message,
+            });
         } else {
-            cjm.setData(
-                {
-                    id: uuid.v4(),
-                    items: [{
-                        userInfo: user,
-                    },],
-                }
-            );
+            cjm.setData({
+                id: uuid.v4(),
+                items: [{
+                    userInfo: user,
+                },],
+            });
         }
         return cjm.toObject();
     }
@@ -76,36 +80,27 @@ exports.createResponse = function (err, user) {
  * @function
  */
 exports.validate = function (message, imperialPath) {
-    var errInvalidToken = {
-        code: 404,
-        message: 'Invalid token',
-    };
-    var errMalformedRequest = {
-        code: 400,
-        message: 'Malformed request',
-    };
-
     var deferred = q.defer();
     var token = extractToken(message);
 
     if (token) {
         Token.findOne({ value: token }, function (err, validToken) {
             if (err || !validToken) {
-                deferred.reject(errInvalidToken);
+                deferred.reject(new NotFoundError('Invalid token'));
             } else {
                 imperial.findUser(validToken.userId, imperialPath)
-                .then(
-                    function (user) {
-                        deferred.resolve(user);
-                    },
-                    function () {
-                        deferred.reject(errInvalidToken);
-                    }
-                );
+                    .done(
+                        function (user) {
+                            deferred.resolve(user);
+                        },
+                        function (err) {
+                            deferred.reject(err);
+                        }
+                    );
             }
         });
     } else {
-        deferred.reject(errMalformedRequest);
+        deferred.reject(new MalformedRequestError());
     }
 
     return deferred.promise;

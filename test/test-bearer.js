@@ -1,11 +1,14 @@
 'use strict';
 
 var bearer   = require('../app/lib/bearer');
-var Token    = require('../app/lib/models/token');
 var imperial = require('../app/lib/bromelia-imperial-cli');
+var Token    = require('../app/lib/models/token');
 var chai     = require('chai');
 var sinon    = require('sinon');
 var q        = require('q');
+var MalformedRequestError = require('../app/lib/exceptions/malformed-request');
+var NotFoundError         = require('../app/lib/exceptions/not-found');
+var CJMError              = require('../app/lib/exceptions/cjm-error');
 
 var should = chai.should();
 
@@ -36,16 +39,19 @@ function createImperialStub() {
 
     var deferredValidUser = q.defer();
     deferredValidUser.resolve({
-        code: 'valid_user',
-        name: 'fulano',
-        email: 'email@email.com',
+        id: 'valid_user',
+        displayName: 'fulano',
+        emails: [{value: 'email@email.com'}],
     });
     imperialStub
         .withArgs('valid_user')
         .returns(deferredValidUser.promise);
 
     var deferredInvalidUser = q.defer();
-    deferredInvalidUser.reject();
+    deferredInvalidUser.reject(new CJMError({
+        code: 404,
+        message: 'Invalid User',
+    }));
     imperialStub
         .withArgs('invalid_user')
         .returns(deferredInvalidUser.promise);
@@ -91,14 +97,17 @@ describe('[Token bearer]', function () {
                     user.should.exist;
                     user.should.be.an('object');
 
-                    user.should.have.property('name');
-                    user.name.should.be.equal('fulano');
+                    user.should.have.property('displayName');
+                    user.displayName.should.be.equal('fulano');
 
-                    user.should.have.property('code');
-                    user.code.should.be.equal('valid_user');
+                    user.should.have.property('id');
+                    user.id.should.be.equal('valid_user');
 
-                    user.should.have.property('email');
-                    user.email.should.be.equal('email@email.com');
+                    user.should.have.property('emails');
+                    user.emails.should.have.lenght > 0;
+                    user.emails[0].should.have.property('value');
+                    user.emails[0].value.should.be
+                        .equal('email@email.com');
                 })
                 .done(function () {
                     done();
@@ -112,13 +121,7 @@ describe('[Token bearer]', function () {
             promise
                 .catch(function (err) {
                     err.should.exist;
-                    err.should.be.an('object');
-
-                    err.should.have.property('code');
-                    err.code.should.be.equal(404);
-
-                    err.should.have.property('message');
-                    err.message.should.be.equal('Invalid token');
+                    err.should.be.an.instanceof(NotFoundError);
                 })
                 .done(function () {
                     done();
@@ -130,13 +133,7 @@ describe('[Token bearer]', function () {
             promise
                 .catch(function (err) {
                     err.should.exist;
-                    err.should.be.an('object');
-
-                    err.should.have.property('code');
-                    err.code.should.be.equal(400);
-
-                    err.should.have.property('message');
-                    err.message.should.be.equal('Malformed request');
+                    err.should.be.an.instanceof(MalformedRequestError);
                 })
                 .done(function () {
                     done();
@@ -150,13 +147,7 @@ describe('[Token bearer]', function () {
             promise
                 .catch(function (err) {
                     err.should.exist;
-                    err.should.be.an('object');
-
-                    err.should.have.property('code');
-                    err.code.should.be.equal(404);
-
-                    err.should.have.property('message');
-                    err.message.should.be.equal('Invalid token');
+                    err.should.be.an.instanceof(CJMError);
                 })
                 .done(function () {
                     done();
@@ -168,9 +159,11 @@ describe('[Token bearer]', function () {
         it('creates an error message', function () {
             var error = {
                 code: 400,
-                message: 'Malformed request',
+                message: 'Malformed Request',
             };
-            var response = bearer.createResponse(error, null);
+
+            var response = bearer.createResponse(
+                new MalformedRequestError(), null);
 
             response.should.exist;
             response.should.have.property('error');
