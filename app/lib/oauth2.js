@@ -64,7 +64,9 @@ server.serializeClient(function (client, callback) {
 
 server.deserializeClient(function (id, callback) {
     Client.findOne({ _id: id }, function (err, client) {
-        if (err) { return callback(err); }
+        if (err) {
+            return callback(err);
+        }
         return callback(null, client);
     });
 });
@@ -168,29 +170,44 @@ exports.authorization = [
             if (err) {
                 return callback(err);
             }
-            // IDE specific behavior
-            if (client.name === 'IDE') {
-                var uidCode = uid(16);
-                var code = new Code({
-                    value: uidCode,
-                    clientId: client._id,
-                    redirectUri: redirectUri,
-                    userId: client.userId,
-                });
-                code.save(function (err) {
-                    if (err) { return callback(err); }
-                });
-                redirectUri += '?code=' + uidCode;
+            if (client !== null) {
+                // IDE specific behavior
+                if (client.name && client.name === 'IDE') {
+                    var uidCode = uid(16);
+                    var code = new Code({
+                        value: uidCode,
+                        clientId: client._id,
+                        redirectUri: redirectUri,
+                        userId: client.userId,
+                    });
+                    code.save(function (err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                    });
+                    redirectUri += '?code=' + uidCode;
+                }
+                return callback(null, client, redirectUri);
+            } else {
+                return callback(null, null, null);
             }
-            return callback(null, client, redirectUri);
         });
     }),
 
     function (req, res) {
-        var client = req.oauth2.client;
-        // IDE specific response
-        if (client.name === 'IDE') {
-            res.redirect(req.oauth2.redirectURI);
+        if (req.oauth2.client !== null) {
+            var client = req.oauth2.client;
+            // IDE specific response
+            if (client.name && client.name === 'IDE') {
+                res.redirect(req.oauth2.redirectURI);
+            } else {
+                // Normal response for oauth2
+                res.render('dialog',
+                    { transactionID: req.oauth2.transactionID,
+                    user: req.user,
+                    client: client, }
+                );
+            }
         } else {
             // Normal response for oauth2
             res.render('dialog',

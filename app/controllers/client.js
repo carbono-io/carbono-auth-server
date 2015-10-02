@@ -25,22 +25,22 @@ module.exports = function () {
             clientHelper.createClient(req.body)
             .then(
                 function (data) {
-                    res.statusCode = 201;
+                    res.status(201);
                     res.json(data);
-                    res.end();
                 },
                 function (error) {
-                    res.statusCode = error.statusCode;
+                    res.status(error.statusCode);
                     res.json(error);
-                    res.end();
                 }
             ).catch(function (error) {
-                res.statusCode = error.statusCode;
+                res.status(error.statusCode);
                 res.json(error);
+            })
+            .done(function () {
                 res.end();
             });
         } else {
-            res.statusCode = 400;
+            res.status(400);
             res.json({
                 code: 400,
                 message: 'Body is empty',
@@ -66,18 +66,18 @@ module.exports = function () {
         clientHelper.getClients(req.body)
         .then(
             function (data) {
-                res.statusCode = 200;
+                res.status(200);
                 res.json(data);
-                res.end();
             },
             function (error) {
-                res.statusCode = error.statusCode;
+                res.status(error.statusCode);
                 res.json(error);
-                res.end();
             }
         ).catch(function (error) {
-            res.statusCode = error.statusCode;
+            res.status(error.statusCode);
             res.json(error);
+        })
+        .done(function () {
             res.end();
         });
     };
