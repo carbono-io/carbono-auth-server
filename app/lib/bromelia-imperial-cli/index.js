@@ -31,9 +31,9 @@ var UserProfile = require('./user-profile');
    * @param {BasicStrategyCallback} callback for BasicStrategy
    * @function
    */
-exports.authenticate = function (username, password) {
+exports.authenticate = function (username, password, imperialPath) {
     var deffered = q.defer();
-    var userHelper = new UserProfile();
+    var userHelper = new UserProfile(imperialPath);
     userHelper.getUserInfo({
         email: username,
     }).then(
@@ -48,14 +48,13 @@ exports.authenticate = function (username, password) {
                         if (user !== null) {
                             // Success
                             deffered.resolve(user);
-                            return callback(null, user);
                         } else {
                             deffered.reject(
                                 new NotFoundError('Invalid password'));
-                            return callback(null, false);
                         }
                     }, function (err) {
-                        return callback(err);
+                        deffered.reject(
+                            new NotFoundError(err));
                     }
                 ).catch(function (err) {
                     deffered.reject(
@@ -66,7 +65,7 @@ exports.authenticate = function (username, password) {
             }
         }, function (err) {
             deffered.reject(
-                new InternalServerError(err));
+                new NotFoundError(err));
         }
     ).catch(function (err) {
         deffered.reject(

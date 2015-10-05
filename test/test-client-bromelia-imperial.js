@@ -66,4 +66,69 @@ describe('[Client Bromelia Imperial]', function () {
             should.pass;
         });
     });
+
+    describe('authenticate(): ', function () {
+        it('authenticates user with email and password', function (done) {
+            var promise = imperial.authenticate('email@200.com', 'pass',
+            this.imperialMockPath);
+
+            promise
+                .then(function (user) {
+                    user.should.exist;
+                    user.should.be.an('object');
+                    user.should.have.property('email');
+                    user.email.should.be.equal('email@200.com');
+
+                    user.should.have.property('code');
+                })
+                .done(function () {
+                    done();
+                });
+        });
+
+        it('Cannot authenticate with invalid username', function (done) {
+            var promise = imperial.authenticate('email@404.com', 'pass',
+            this.imperialMockPath);
+
+            promise
+                .catch(function (err) {
+                    err.should.have.property('statusCode');
+                    err.statusCode.should.be.equal(404);
+                    err.should.have.property('message');
+                })
+                .done(function () {
+                    done();
+                });
+        });
+
+        it('Cannot authenticate without password', function (done) {
+            var promise = imperial.authenticate('email@200.com', '',
+            this.imperialMockPath);
+
+            promise
+                .catch(function (err) {
+                    err.should.have.property('statusCode');
+                    err.statusCode.should.be.equal(404);
+                    err.should.have.property('message');
+                })
+                .done(function () {
+                    done();
+                });
+        });
+
+        it('Cannot authenticate without email', function (done) {
+            var promise = imperial.authenticate('', 'pass',
+            this.imperialMockPath);
+
+            promise
+                .catch(function (err) {
+                    err.should.have.property('statusCode');
+                    err.statusCode.should.be.equal(404);
+                    err.should.have.property('message');
+                })
+                .done(function () {
+                    done();
+                });
+        });
+    });
 });
