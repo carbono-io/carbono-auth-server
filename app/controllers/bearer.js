@@ -1,14 +1,12 @@
 'use strict';
 var bearerLib  = require('../lib/bearer');
-var etcd       = require('../../lib/etcd-manager');
-var config     = require('config');
+var etcd       = require('carbono-service-manager');
 
 module.exports = function () {
 
     this.validate = function (req, res) {
-        var imperialPath = config.etcd.hosts.key;
 
-        bearerLib.validate(req.body, etcd.getServiceUrl(imperialPath))
+        bearerLib.validate(req.body, etcd.getServiceUrl("accm"))
             .then(
                 function (user) {
                     res.status(200);
