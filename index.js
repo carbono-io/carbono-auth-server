@@ -5,7 +5,7 @@ var passport = require('passport');
 var mongoose = require('mongoose');
 var config   = require('config');
 var parser   = require('body-parser');
-var etcd     = require('./lib/etcd-manager')
+var etcd     = require('./lib/etcd-manager');
 
 // Connect to the auth MongoDB as microservices arch state
 mongoose.connect('mongodb://localhost:27017/carbono-auth');
@@ -45,10 +45,10 @@ app.listen(port, function () {
     serviceDiscovery();
 });
 
-function serviceDiscovery(){
+function serviceDiscovery() {
     var cfg  = config.get('etcd');
     etcd.init(cfg.key, cfg.alias, cfg.host, cfg.port);
-    cfg.hosts.forEach(function(host) {
+    cfg.hosts.forEach(function (host) {
         etcd.findService(host.key, host.alias);
     });
 }
