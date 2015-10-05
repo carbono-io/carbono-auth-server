@@ -1,16 +1,7 @@
 'use strict';
 var UserProfile = require('../app/lib/bromelia-imperial-cli/user-profile.js');
 var should = require('chai').should();
-var userProfile = new UserProfile();
-
-function stringGen(len) {
-    var text = '';
-    var charset = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    for (var i = 0; i < len; i++) {
-        text += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return text;
-}
+var userProfile = new UserProfile('http://localhost:3000/account-manager');
 
 function checkProfileResponse(res) {
     res.should.have.property('provider');
@@ -28,22 +19,20 @@ function checkProfileResponse(res) {
     res.should.have.property('photos');
     res.photos.should.be.a('array');
 }
-var userEmail = '';
-var userPassword = '';
-var userCode = '';
+
 describe('UserProfile Lib', function () {
 
     describe('getProfile()', function () {
         it('Should get a profile with an existing code', function (done) {
             var promiss = userProfile.getProfile({
-                code: userCode,
+                code: 'user200',
             });
             promiss
                 .then(
                     function (res) {
+                        should;
                         checkProfileResponse(res);
-                        res.emails[0].value.should.be.equals(userEmail);
-                        res.id.should.be.equals(userCode);
+                        res.id.should.be.equals('user200');
                     }
                 )
                 .done(function () {
@@ -54,31 +43,31 @@ describe('UserProfile Lib', function () {
         it('Should not get a profile with a non-existing code',
         function (done) {
             var promiss = userProfile.getProfile({
-                code: 'fakeCode',
+                code: 'user404',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(404);
+                    err.statusCode.should.be.equals(404);
                 })
                 .done(function () {
                     done();
                 });
         });
 
-        it('Should not get a profile with a code too big',
+        it('Should not get a profile with invalid request',
         function (done) {
             var promiss = userProfile.getProfile({
-                code: stringGen(100),
+                code: 'user400',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
@@ -92,9 +81,9 @@ describe('UserProfile Lib', function () {
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
@@ -105,14 +94,13 @@ describe('UserProfile Lib', function () {
     describe('getUserInfo()', function () {
         it('Should get a profile with an existing email', function (done) {
             var promiss = userProfile.getUserInfo({
-                email: userEmail,
+                email: 'email@200.com',
             });
             promiss
                 .then(
                     function (res) {
                         checkProfileResponse(res);
-                        res.emails[0].value.should.be.equals(userEmail);
-                        res.id.should.be.equals(userCode);
+                        res.emails[0].value.should.be.equals('email@200.com');
                     }
                 )
                 .done(function () {
@@ -123,31 +111,31 @@ describe('UserProfile Lib', function () {
         it('Should not get a profile with a non-existing email',
         function (done) {
             var promiss = userProfile.getUserInfo({
-                email: 'fake@email.com',
+                email: 'email@404.com',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(404);
+                    err.statusCode.should.be.equals(404);
                 })
                 .done(function () {
                     done();
                 });
         });
 
-        it('Should not get a profile with a email too big',
+        it('Should not get a profile with invalid request',
         function (done) {
             var promiss = userProfile.getUserInfo({
-                email: stringGen(300),
+                email: 'email@400.com',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
@@ -161,9 +149,9 @@ describe('UserProfile Lib', function () {
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
@@ -175,16 +163,15 @@ describe('UserProfile Lib', function () {
         it('Should validate login with correct user and password',
         function (done) {
             var promiss = userProfile.login({
-                email: userEmail,
-                password: userPassword,
+                email: 'email@200.com',
+                password: 'sshhh',
             });
             promiss
                 .then(
                     function (res) {
                         res.should.have.property('email');
                         res.should.have.property('code');
-                        res.email.should.be.equals(userEmail);
-                        res.code.should.be.equals(userCode);
+                        res.email.should.be.equals('email@200.com');
                     }
                 )
                 .done(function () {
@@ -195,33 +182,15 @@ describe('UserProfile Lib', function () {
         it('Should not login with wrong email',
         function (done) {
             var promiss = userProfile.login({
-                email: 'fake@email.com',
-                password: userPassword,
+                email: 'email@404.com',
+                password: 'invalidEmail',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(404);
-                })
-                .done(function () {
-                    done();
-                });
-        });
-
-        it('Should not login with wrong password',
-        function (done) {
-            var promiss = userProfile.login({
-                email: userEmail,
-                password: userPassword,
-            });
-            promiss
-                .catch(function (err) {
-                    err.should.not.be.null;
-                    err.should.have.property('code');
-                    err.should.have.property('message');
-                    err.code.should.be.equals(404);
+                    err.statusCode.should.be.equals(404);
                 })
                 .done(function () {
                     done();
@@ -231,14 +200,14 @@ describe('UserProfile Lib', function () {
         it('Should not login without password',
         function (done) {
             var promiss = userProfile.login({
-                email: userEmail,
+                email: 'email@200.com',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
@@ -248,50 +217,32 @@ describe('UserProfile Lib', function () {
         it('Should not login without email',
         function (done) {
             var promiss = userProfile.login({
-                password: userPassword,
+                password: 'missingEmail',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();
                 });
         });
 
-        it('Should not login with email too big',
+        it('Should not login with invalid email',
         function (done) {
             var promiss = userProfile.login({
-                email: stringGen(300),
-                password: userPassword,
+                email: 'email@400.com',
+                password: 'userPassword',
             });
             promiss
                 .catch(function (err) {
                     err.should.not.be.null;
-                    err.should.have.property('code');
+                    err.should.have.property('statusCode');
                     err.should.have.property('message');
-                    err.code.should.be.equals(400);
-                })
-                .done(function () {
-                    done();
-                });
-        });
-
-        it('Should not login with password too big',
-        function (done) {
-            var promiss = userProfile.login({
-                email: 'email@eee.com',
-                password: stringGen(300),
-            });
-            promiss
-                .catch(function (err) {
-                    err.should.not.be.null;
-                    err.should.have.property('code');
-                    err.should.have.property('message');
-                    err.code.should.be.equals(400);
+                    err.statusCode.should.be.equals(400);
                 })
                 .done(function () {
                     done();

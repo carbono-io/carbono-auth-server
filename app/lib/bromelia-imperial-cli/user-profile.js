@@ -158,7 +158,7 @@ UserProfile.prototype.getProfile = function (data) {
  */
 UserProfile.prototype.getUserInfo = function (data) {
     var deffered = q.defer();
-    if (data.email !== null) {
+    if (data.email) {
         var options = {
             uri: this.serviceUrl + '/users',
             method: 'GET',
