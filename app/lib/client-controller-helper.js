@@ -106,7 +106,7 @@ ClientHelper.prototype.createClient = function (data) {
  * @returns {string} clients.secret - The secret of the client
  * @returns {string} clients.userId - The userId of the client
  */
-ClientHelper.prototype.getClients = function (data) {
+ClientHelper.prototype.getClients = function () {
     var deffered = q.defer();
     try {
         Client.find({}, function (err, clients) {
