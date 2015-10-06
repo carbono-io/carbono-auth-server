@@ -21,7 +21,7 @@
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.13.3",
     "carbono-json-messages": "0.0.2",
-    "carbono-service-manager": "0.0.4",
+    "carbono-service-manager": "0.0.7",
     "colors": "^1.1.2",
     "config": "^1.16.0",
     "consign": "^0.1.2",
@@ -33,9 +33,13 @@
     "oauth2orize": "^1.0.1",
     "passport": "^0.3.0",
     "passport-http": "^0.3.0",
-    "passport-http-bearer": "^1.0.1",
+    "passport-oauth2-client-password": "^0.1.2",
     "q": "^1.4.1",
-    "request": "^2.61.0"
+    "request": "^2.64.0",
+    "sinon": "^1.17.0",
+    "sinon-chai": "^2.8.0",
+    "supertest": "^1.1.0",
+    "uuid": "^2.0.1"
   },
   "devDependencies": {
     "chai": "3.2.0",
@@ -48,6 +52,7 @@
     "jsdoc": "3.3.2",
     "jshint-stylish": "2.0.1",
     "mocha": "2.2.5",
+    "mockgoose": "^4.0.2",
     "sinon": "1.15.4"
   }
 }

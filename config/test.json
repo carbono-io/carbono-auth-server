@@ -6,8 +6,8 @@
         "port": 7892,
         "key" : "auth",
         "alias" : "Carbono OAuth2 Server",
-        "dependencies" : [
-            {"key" : "accm", "alias" : "Bromelia Imperial"}
+        "hosts" : [
+            {"key" : "imperial", "alias" : "Bromelia Imperial"}
         ]
     }
 }

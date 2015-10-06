@@ -4,21 +4,23 @@ var consign  = require('consign');
 var passport = require('passport');
 var mongoose = require('mongoose');
 var config   = require('config');
+var parser   = require('body-parser');
 
-// Connect to the carbono MongoDB
-mongoose.connect('mongodb://localhost:27017/carbono');
+// Connect to the auth MongoDB as microservices arch state
+mongoose.connect('mongodb://localhost:27017/carbono-auth');
 
 var app = express();
 
 // Express app configuration
 app.set('view engine', 'ejs');
 
-app.use(require('body-parser').urlencoded({
+app.use(parser.urlencoded({
     extended: true,
 }));
+app.use(parser.json());
 
 app.use(require('express-session')({
-    secret: 'Super Secret Session Key',
+    secret: 'Yog-Sottoth umara ish abec',
     saveUninitialized: true,
     resave: true,
 }));
@@ -32,14 +34,11 @@ consign({cwd: 'app'})
     .include('routes')
     .into(app);
 
-// Register and Run
-var etcd = require('./lib/service-register');
-var cfg  = config.get('etcd');
+// Register and Run();
 var port = config.get('port');
 var host = config.get('host');
 app.listen(port, function () {
     console.log('Listening at http://%s:%s',
     host, port);
-    // Service discovery registration
-    etcd.init(cfg);
+    require('carbono-service-manager');
 });

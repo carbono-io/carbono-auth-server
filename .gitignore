@@ -38,6 +38,6 @@ docs
 
 #Visual Code
 .settings
-
+.vscode
 .DS_Store
 

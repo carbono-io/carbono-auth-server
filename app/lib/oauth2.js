@@ -63,10 +63,16 @@ server.serializeClient(function (client, callback) {
 });
 
 server.deserializeClient(function (id, callback) {
-    Client.findOne({ _id: id }, function (err, client) {
-        if (err) { return callback(err); }
-        return callback(null, client);
-    });
+    try {
+        Client.findOne({ _id: id }, function (err, client) {
+            if (err) {
+                return callback(err);
+            }
+            return callback(null, client);
+        });
+    } catch (e) {
+        return callback(e);
+    }
 });
 
 /**
@@ -86,19 +92,26 @@ server.deserializeClient(function (id, callback) {
  */
 server.grant(oauth2orize.grant.code(
     function (client, redirectUri, user, ares, callback) {
-        // Create a new authorization code
-        var code = new Code({
-            value: uid(16),
-            clientId: client._id,
-            redirectUri: redirectUri,
-            userId: user.code,
-        });
+        try {
+            // Create a new authorization code
+            var uidCode = uid(16);
+            var code = new Code({
+                value: uidCode,
+                clientId: client._id,
+                redirectUri: redirectUri,
+                userId: user.code,
+            });
 
-        // Save the auth code and check for errors
-        code.save(function (err) {
-            if (err) { return callback(err); }
-            callback(null, code.value);
-        });
+            // Save the auth code and check for errors
+            code.save(function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                callback(null, uidCode);
+            });
+        } catch (e) {
+            return callback(e);
+        }
     })
 );
 
@@ -111,34 +124,46 @@ server.grant(oauth2orize.grant.code(
  */
 server.exchange(oauth2orize.exchange.code(
     function (client, code, redirectUri, callback) {
-        Code.findOne({ value: code }, function (err, authCode) {
-            if (err) { return callback(err); }
-            if (authCode === undefined) { return callback(null, false); }
-            if (client._id.toString() !== authCode.clientId) {
-                return callback(null, false);
-            }
-            if (redirectUri !== authCode.redirectUri) {
-                return callback(null, false);
-            }
+        try {
+            Code.findOne({ value: code }, function (err, authCode) {
+                if (err) {
+                    return callback(err);
+                }
+                if (!authCode || authCode === undefined) {
+                    return callback(null, false);
+                }
+                if (client._id.toString() !== authCode.clientId) {
+                    return callback(null, false);
+                }
+                if (redirectUri !== authCode.redirectUri) {
+                    return callback(null, false);
+                }
 
-            // Delete auth code now that it has been used
-            authCode.remove(function (err) {
-                if (err) { return callback(err); }
+                // Delete auth code now that it has been used
+                authCode.remove(function (err) {
+                    if (err) {
+                        return callback(err);
+                    }
 
-                // Create a new access token
-                var token = new Token({
-                    value: uid(256),
-                    clientId: authCode.clientId,
-                    userId: authCode.userId,
-                });
+                    // Create a new access token
+                    var token = new Token({
+                        value: uid(256),
+                        clientId: authCode.clientId,
+                        userId: authCode.userId,
+                    });
 
-                // Save the access token and check for errors
-                token.save(function (err) {
-                    if (err) { return callback(err); }
-                    callback(null, token);
+                    // Save the access token and check for errors
+                    token.save(function (err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                        callback(null, token);
+                    });
                 });
             });
-        });
+        } catch (e) {
+            return callback(e);
+        }
     })
 );
 
@@ -161,19 +186,69 @@ server.exchange(oauth2orize.exchange.code(
  */
 exports.authorization = [
     server.authorization(function (clientId, redirectUri, callback) {
-        Client.findOne({ id: clientId }, function (err, client) {
-            if (err) { return callback(err); }
-
-            return callback(null, client, redirectUri);
-        });
+        try {
+            Client.findOne({ id: clientId }, function (err, client) {
+                if (err) {
+                    return callback(err);
+                }
+                if (client !== null) {
+                    // IDE specific behavior
+                    if (client.name && client.name === 'IDE') {
+                        var uidCode = uid(16);
+                        var code = new Code({
+                            value: uidCode,
+                            clientId: client._id,
+                            redirectUri: redirectUri,
+                            userId: client.userId,
+                        });
+                        code.save(function (err) {
+                            if (err) {
+                                return callback(err);
+                            }
+                        });
+                        redirectUri += '?code=' + uidCode;
+                    }
+                    return callback(null, client, redirectUri);
+                } else {
+                    return callback(null, null, null);
+                }
+            });
+        } catch (e) {
+            return callback(e);
+        }
     }),
 
     function (req, res) {
-        res.render('dialog',
-            { transactionID: req.oauth2.transactionID,
-            user: req.user,
-            client: req.oauth2.client, }
-        );
+        try {
+            if (req.oauth2.client !== null) {
+                var client = req.oauth2.client;
+                // IDE specific response
+                if (client.name && client.name === 'IDE') {
+                    res.redirect(req.oauth2.redirectURI);
+                } else {
+                    // Normal response for oauth2
+                    res.render('dialog',
+                        { transactionID: req.oauth2.transactionID,
+                        user: req.user,
+                        client: client, }
+                    );
+                }
+            } else {
+                // Normal response for oauth2
+                res.render('dialog',
+                    { transactionID: req.oauth2.transactionID,
+                    user: req.user,
+                    client: client, }
+                );
+            }
+        } catch (e) {
+            res.render('dialog',
+                { transactionID: null,
+                user: null,
+                client: null,
+                error: e, }
+            );
+        }
     },
 ];
 
