@@ -21,32 +21,19 @@ module.exports = function () {
      */
     this.postClients = function (req, res) {
         var clientHelper = new ClientHelper();
-        if (req.body !== null) {
-            clientHelper.createClient(req.body)
-            .then(
-                function (data) {
-                    res.status(201);
-                    res.json(data);
-                },
-                function (error) {
-                    res.status(error.statusCode);
-                    res.json(error);
-                }
-            ).catch(function (error) {
-                res.status(error.statusCode);
-                res.json(error);
-            })
-            .done(function () {
-                res.end();
-            });
-        } else {
-            res.status(400);
-            res.json({
-                code: 400,
-                message: 'Body is empty',
-            });
+        clientHelper.createClient(req.body)
+        .then(
+            function (data) {
+                res.status(201);
+                res.json(data);
+            }
+        ).catch(function (error) {
+            res.status(error.statusCode);
+            res.json(error);
+        })
+        .done(function () {
             res.end();
-        }
+        });
     };
 
     /**
@@ -63,15 +50,11 @@ module.exports = function () {
      */
     this.getClients = function (req, res) {
         var clientHelper = new ClientHelper();
-        clientHelper.getClients(req.body)
+        clientHelper.getClients()
         .then(
             function (data) {
                 res.status(200);
                 res.json(data);
-            },
-            function (error) {
-                res.status(error.statusCode);
-                res.json(error);
             }
         ).catch(function (error) {
             res.status(error.statusCode);
