@@ -1,8 +1,9 @@
 {
     "port" : 7892,
-    "host" : "127.0.0.1",
+    "host" : "carbonohost",
+    "mongourl" : "mongodb://auth-mongo:27017/carbono-auth",
     "etcd": {
-        "host": "127.0.0.1",
+        "host": "carbonohost",
         "port": 7892,
         "key" : "auth",
         "alias" : "Carbono OAuth2 Server",

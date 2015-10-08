@@ -5,9 +5,9 @@ var passport = require('passport');
 var mongoose = require('mongoose');
 var config   = require('config');
 var parser   = require('body-parser');
-
+var mongourl = config.get('mongourl');
 // Connect to the auth MongoDB as microservices arch state
-mongoose.connect('mongodb://localhost:27017/carbono-auth');
+mongoose.connect(mongourl);
 
 var app = express();
 
