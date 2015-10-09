@@ -31,9 +31,9 @@ var UserProfile = require('./user-profile');
    * @param {BasicStrategyCallback} callback for BasicStrategy
    * @function
    */
-exports.authenticate = function (username, password, serviceUrl) {
+exports.authenticate = function (username, password) {
     var deffered = q.defer();
-    var userHelper = new UserProfile(serviceUrl);
+    var userHelper = new UserProfile();
     userHelper.getUserInfo({
         email: username,
     }).then(
@@ -79,12 +79,11 @@ exports.authenticate = function (username, password, serviceUrl) {
  *
  * @param {string} userId - user identifier
 Add a comment to this line
- * @param {string} serviceUrl - path to access Imperial
  * @return {Object} promise which will be resolved when an user was found, and
  will be rejected when an error occurs or when the id is invalid.
  * @function
  */
-exports.findUser = function (userId, serviceUrl) {
-    var userHelper = new UserProfile(serviceUrl);
+exports.findUser = function (userId) {
+    var userHelper = new UserProfile();
     return userHelper.getProfile({code: userId});
 };

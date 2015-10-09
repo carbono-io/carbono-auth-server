@@ -17,8 +17,8 @@ var InternalServerError =
  *
  * @class
  */
-var UserProfile = function (serviceUrl) {
-    this.serviceUrl = serviceUrl;
+var UserProfile = function () {
+    this.serviceUrl = etcd.getServiceUrl('accm');
     return this;
 };
 
