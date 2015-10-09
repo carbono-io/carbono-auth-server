@@ -3,6 +3,6 @@ COPY . /carbono-auth-server
 WORKDIR /carbono-auth-server
 RUN npm install
 
-EXPOSE 7892
+EXPOSE 7999
 
 CMD ["/bin/sh", "-c", "node ."]
