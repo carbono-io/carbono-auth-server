@@ -18,7 +18,7 @@ var InternalServerError =
  * @class
  */
 var UserProfile = function (serviceUrl) {
-    this.serviceUrl = serviceUrl || etcd.getServiceUrl('accm');
+    this.serviceUrl = serviceUrl;
     return this;
 };
 
@@ -96,7 +96,7 @@ UserProfile.prototype.getProfile = function (data) {
     var deffered = q.defer();
     if (data.code !== null && data.code !== undefined) {
         var options = {
-            uri: this.serviceUrl + '/profiles/' + data.code,
+            uri: 'http://' + this.serviceUrl + '/profiles/' + data.code,
             method: 'GET',
         };
         try {
@@ -160,7 +160,7 @@ UserProfile.prototype.getUserInfo = function (data) {
     var deffered = q.defer();
     if (data.email) {
         var options = {
-            uri: this.serviceUrl + '/users',
+            uri: 'http://' + this.serviceUrl + '/users',
             method: 'GET',
             headers: { crbEmail: data.email },
         };
@@ -223,7 +223,7 @@ UserProfile.prototype.login = function (data) {
         });
 
         var options = {
-            uri: this.serviceUrl + '/login',
+            uri: 'http://' + this.serviceUrl + '/login',
             method: 'POST',
             json: cjm.toObject(),
         };

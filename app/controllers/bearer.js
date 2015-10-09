@@ -6,7 +6,7 @@ module.exports = function () {
 
     this.validate = function (req, res) {
 
-        bearerLib.validate(req.body, etcd.getServiceUrl("accm"))
+        bearerLib.validate(req.body, etcd.getServiceUrl('accm'))
             .then(
                 function (user) {
                     res.status(200);
