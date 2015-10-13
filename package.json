@@ -33,7 +33,6 @@
     "oauth2orize": "^1.0.1",
     "passport": "^0.3.0",
     "passport-http": "^0.3.0",
-    "passport-oauth2-client-password": "^0.1.2",
     "q": "^1.4.1",
     "request": "^2.64.0",
     "sinon": "^1.17.0",
