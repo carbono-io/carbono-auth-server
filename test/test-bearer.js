@@ -1,5 +1,7 @@
 'use strict';
-
+var request = require('supertest');
+var mongoose = require('mongoose');
+var mockgoose = require('mockgoose');
 var bearer   = require('../app/lib/bearer');
 var imperial = require('../app/lib/bromelia-imperial-cli');
 var Token    = require('../app/lib/models/token');
@@ -9,6 +11,12 @@ var q        = require('q');
 var MalformedRequestError = require('../app/lib/exceptions/malformed-request');
 var NotFoundError         = require('../app/lib/exceptions/not-found');
 var CJMError              = require('../app/lib/exceptions/cjm-error');
+var url = 'http://localhost:7892';
+
+var server = request.agent(url);
+var app = null;
+
+mockgoose(mongoose);
 
 var should = chai.should();
 
@@ -85,6 +93,92 @@ describe('[Token bearer]', function () {
     after(function () {
         this.tokenStub.restore();
         this.imperialStub.restore();
+    });
+    describe('controller: ', function () {
+        before(function (done) {
+            app = require('../');
+            done();
+        });
+        after(function (done) {
+            done();
+        });
+        function defaultResponse(res) {
+            res.should.have.property('apiVersion');
+            res.should.have.property('id');
+            res.should.have.property('data');
+            res.data.should.have.property('items');
+            res.data.items.should.be.instanceof(Array);
+        }
+        function defaultErrorResponse(res) {
+            res.should.have.property('apiVersion');
+            res.should.have.property('id');
+            res.should.have.property('error');
+            res.error.should.have.property('code');
+            res.error.should.have.property('message');
+        }
+        it('validates an existing token', function (done) {
+            this.requestMessage.data.items[0].token = 'valid_token';
+            server
+                .post('/bearer/validate')
+                .set('content-type', 'application/x-www-form-urlencoded')
+                .send(this.requestMessage)
+                .end(function (err, res) {
+                    res.status.should.equal(200);
+                    defaultResponse(res.body);
+                    var data = res.body.data.items[0];
+                    data.should.have.property('userInfo');
+                    data.userInfo.should.have.property('displayName');
+                    data.userInfo.displayName.should.be.equal('fulano');
+
+                    data.userInfo.should.have.property('id');
+                    data.userInfo.id.should.be.equal('valid_user');
+
+                    data.userInfo.should.have.property('emails');
+                    data.userInfo.emails.should.have.lenght > 0;
+                    data.userInfo.emails[0].should.have.property('value');
+                    data.userInfo.emails[0].value.should.be
+                        .equal('email@email.com');
+                    done();
+                });
+        });
+
+        it('don\'t validate a non-existent token', function (done) {
+            this.requestMessage.data.items[0].token = 'non_existent_token';
+            server
+                .post('/bearer/validate')
+                .set('content-type', 'application/x-www-form-urlencoded')
+                .send(this.requestMessage)
+                .end(function (err, res) {
+                    res.status.should.equal(404);
+                    defaultErrorResponse(res.body);
+                    done();
+                });
+        });
+
+        it('don\'t validate a malformed request', function (done) {
+            server
+                .post('/bearer/validate')
+                .set('content-type', 'application/x-www-form-urlencoded')
+                .send(this.requestMessage)
+                .end(function (err, res) {
+                    res.status.should.equal(400);
+                    defaultErrorResponse(res.body);
+                    done();
+                });
+        });
+
+        it('don\'t validate without a user', function (done) {
+            this.requestMessage.data.items[0].token = 'token_without_user';
+            server
+                .post('/bearer/validate')
+                .set('content-type', 'application/x-www-form-urlencoded')
+                .send(this.requestMessage)
+                .end(function (err, res) {
+                    res.status.should.equal(404);
+                    defaultErrorResponse(res.body);
+                    done();
+                });
+        });
     });
 
     describe('validate(): ', function () {

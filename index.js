@@ -42,3 +42,5 @@ app.listen(port, function () {
     host, port);
     require('carbono-service-manager');
 });
+
+module.exports = app;
