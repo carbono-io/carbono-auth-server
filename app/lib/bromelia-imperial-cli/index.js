@@ -38,14 +38,14 @@ exports.authenticate = function (username, password) {
         email: username,
     }).then(
         function (user) {
-            if (user !== null) {
+            if (user !== undefined && user !== null) {
                 // Make sure the password is correct
                 userHelper.login({
                     email: username,
                     password: password,
                 }).then(
                     function (user) {
-                        if (user !== null) {
+                        if (user !== undefined && user !== null) {
                             // Success
                             deffered.resolve(user);
                         } else {

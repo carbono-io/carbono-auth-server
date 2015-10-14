@@ -6,6 +6,9 @@ var Client = require('./models/client');
 var Token = require('./models/token');
 var Code = require('./models/code');
 
+var imperial = require('./bromelia-imperial-cli');
+var NotFoundError = require('./exceptions/not-found');
+
 /**
  * [Private API] Return a random int, used by `utils.uid()`
  *
@@ -125,7 +128,16 @@ server.grant(oauth2orize.grant.code(
 server.exchange(oauth2orize.exchange.code(
     function (client, code, redirectUri, callback) {
         try {
-            Code.findOne({ value: code }, function (err, authCode) {
+            Code.find({ clientId: client._id }, function (err, result) {
+                var authCode;
+                result.forEach(function(_code) {
+                    if(_code.value === code) authCode = _code;
+                    _code.remove(function (err) {
+                        if (err) {
+                            return callback(err);
+                        }
+                    });
+                });
                 if (err) {
                     return callback(err);
                 }
@@ -138,34 +150,65 @@ server.exchange(oauth2orize.exchange.code(
                 if (redirectUri !== authCode.redirectUri) {
                     return callback(null, false);
                 }
+                // Create a new access token
+                var token = new Token({
+                    value: uid(256),
+                    clientId: authCode.clientId,
+                    userId: authCode.userId,
+                });
 
-                // Delete auth code now that it has been used
-                authCode.remove(function (err) {
+                // Save the access token and check for errors
+                token.save(function (err) {
                     if (err) {
                         return callback(err);
                     }
-
-                    // Create a new access token
-                    var token = new Token({
-                        value: uid(256),
-                        clientId: authCode.clientId,
-                        userId: authCode.userId,
-                    });
-
-                    // Save the access token and check for errors
-                    token.save(function (err) {
-                        if (err) {
-                            return callback(err);
-                        }
-                        callback(null, token);
-                    });
+                    callback(null, token);
                 });
+
             });
         } catch (e) {
             return callback(e);
         }
     })
 );
+
+/**
+ * Password token exchange policy
+ * 
+ * http://tools.ietf.org/html/draft-ietf-oauth-v2-28#section-4.3
+ */
+server.exchange(oauth2orize.exchange.password(
+    function(client, username, password, scope, callback) {
+    
+        imperial.authenticate(username, password).then(
+            function (user) {
+                // Create a new access token
+                var token = new Token({
+                    value: uid(256),
+                    clientId: client._id,
+                    userId: user.code,
+                });
+
+                // Save the access token and check for errors
+                token.save(function (err) {
+                    if (err) {
+                        return callback(err);
+                    }
+                    callback(null, token);
+                });
+            },
+            function (err) {
+                if (err instanceof NotFoundError) {
+                    return callback(null, false);
+                } else {
+                    return callback(err);
+                }
+            }
+        ).catch(function (err) {
+            return callback(err);
+        });
+         
+    }));
 
 /**
  * User authorization endpoint
@@ -192,22 +235,6 @@ exports.authorization = [
                     return callback(err);
                 }
                 if (client !== null) {
-                    // IDE specific behavior
-                    if (client.name && client.name === 'IDE') {
-                        var uidCode = uid(16);
-                        var code = new Code({
-                            value: uidCode,
-                            clientId: client._id,
-                            redirectUri: redirectUri,
-                            userId: client.userId,
-                        });
-                        code.save(function (err) {
-                            if (err) {
-                                return callback(err);
-                            }
-                        });
-                        redirectUri += '?code=' + uidCode;
-                    }
                     return callback(null, client, redirectUri);
                 } else {
                     return callback(null, null, null);
@@ -220,27 +247,17 @@ exports.authorization = [
 
     function (req, res) {
         try {
-            if (req.oauth2.client !== null) {
-                var client = req.oauth2.client;
-                // IDE specific response
-                if (client.name && client.name === 'IDE') {
-                    res.redirect(req.oauth2.redirectURI);
-                } else {
-                    // Normal response for oauth2
-                    res.render('dialog',
-                        { transactionID: req.oauth2.transactionID,
-                        user: req.user,
-                        client: client, }
-                    );
-                }
-            } else {
-                // Normal response for oauth2
-                res.render('dialog',
-                    { transactionID: req.oauth2.transactionID,
-                    user: req.user,
-                    client: client, }
-                );
+            if (req.oauth2.client == null) {
+                throw new Error('Serialization error.');
             }
+
+            var client = req.oauth2.client;
+            res.render('dialog',
+                { transactionID: req.oauth2.transactionID,
+                user: req.user,
+                client: client, }
+            );
+            
         } catch (e) {
             res.render('dialog',
                 { transactionID: null,
