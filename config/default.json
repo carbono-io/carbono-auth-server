@@ -7,6 +7,7 @@
         "port": 7999,
         "key" : "auth",
         "alias" : "Carbono OAuth2 Server",
+        "namespace" : "/auth/",
         "dependencies" : [
             {"key" : "accm", "alias" : "Bromelia Imperial"}
         ]
